@@ -165,11 +165,15 @@ class Mati_Frontend {
 		// デベロッパーツール系キー無効化
 		if ( ! empty( $settings['disable_devtools_keys'] ) ) {
 			$scripts[] = 'document.addEventListener("keydown", function(e) {
-				if (e.key === "F12" ||
-				    (e.ctrlKey && e.shiftKey && e.key === "I") ||
-				    (e.ctrlKey && e.shiftKey && e.key === "J") ||
-				    (e.ctrlKey && e.shiftKey && e.key === "C") ||
-				    (e.ctrlKey && e.key === "U")) {
+				if (e.key === "F12" || e.keyCode === 123 ||
+				    (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "i")) ||
+				    (e.ctrlKey && e.shiftKey && (e.key === "J" || e.key === "j")) ||
+				    (e.ctrlKey && e.shiftKey && (e.key === "C" || e.key === "c")) ||
+				    (e.ctrlKey && (e.key === "U" || e.key === "u")) ||
+				    (e.metaKey && e.altKey && (e.key === "I" || e.key === "i")) ||
+				    (e.metaKey && e.altKey && (e.key === "J" || e.key === "j")) ||
+				    (e.metaKey && e.altKey && (e.key === "C" || e.key === "c")) ||
+				    (e.metaKey && (e.key === "U" || e.key === "u"))) {
 					e.preventDefault();
 					return false;
 				}
@@ -179,7 +183,7 @@ class Mati_Frontend {
 		// サイト保存キー無効化
 		if ( ! empty( $settings['disable_save_keys'] ) ) {
 			$scripts[] = 'document.addEventListener("keydown", function(e) {
-				if (e.ctrlKey && e.key === "s") {
+				if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S")) {
 					e.preventDefault();
 					return false;
 				}
