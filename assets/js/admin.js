@@ -176,18 +176,23 @@
 							.addClass('notice notice-success')
 							.html('<p>' + response.data.message + '</p>')
 							.slideDown();
+
+						// CarryPodと同様に、保存後にページをリロード
+						setTimeout(function() {
+							location.reload();
+						}, 1000);
 					} else {
 						$message
 							.removeClass('notice-success')
 							.addClass('notice notice-error')
 							.html('<p>' + response.data.message + '</p>')
 							.slideDown();
-					}
 
-					// 3秒後にメッセージを非表示
-					setTimeout(function() {
-						$message.slideUp();
-					}, 3000);
+						// 3秒後にメッセージを非表示
+						setTimeout(function() {
+							$message.slideUp();
+						}, 3000);
+					}
 				},
 				error: function() {
 					$message

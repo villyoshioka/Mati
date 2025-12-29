@@ -5,7 +5,7 @@
 [![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-blue.svg)](https://www.php.net/)
-[![Version](https://img.shields.io/badge/Version-1.0.1-green.svg)](https://github.com/villyoshioka/mati/releases)
+[![Version](https://img.shields.io/badge/Version-1.1.0-green.svg)](https://github.com/villyoshioka/mati/releases)
 
 > **注意**: **このプラグインについて、コードは公開していますが、サポートは行っていません。**
 
@@ -18,8 +18,8 @@ WordPressサイトを守るための軽量プラグインです。ギリシャ�
 ### 主な機能
 
 - 不要な情報の非表示（WordPressバージョン、oEmbed、RSD、wlwmanifest、shortlink、pingback）
-- コンテンツ保護（右クリック禁止、デベロッパーツール系キー無効化、テキスト選択禁止、画像ドラッグ禁止、印刷禁止、AI学習防止メタタグ）
-- SEO（Google Search Console、Bing Webmaster Tools認証メタタグ）
+- コンテンツ保護（右クリック禁止、デベロッパーツール系キー無効化、テキスト選択禁止、画像ドラッグ禁止、印刷禁止、検索エンジンキャッシュ拒否、AI学習防止メタタグ）
+- SEO（Google Search Console、Bing Webmaster Tools認証メタタグ、JSON-LD構造化データ）
 - Fediverse本人確認（Misskey・Mastodon）
 
 ### Carry Podとの連携

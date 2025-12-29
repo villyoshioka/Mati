@@ -42,6 +42,9 @@ class Mati_Admin {
 	 * 管理メニューを追加
 	 */
 	public function add_admin_menu() {
+		// CarryPodが有効な場合は81、無効な場合は4（設定の上）
+		$priority = function_exists( 'carry_pod_init' ) ? 81 : 4;
+
 		add_menu_page(
 			'Mati',
 			'Mati',
@@ -49,7 +52,7 @@ class Mati_Admin {
 			'mati',
 			array( $this, 'render_settings_page' ),
 			'dashicons-shield',
-			80
+			$priority
 		);
 	}
 
@@ -176,11 +179,98 @@ class Mati_Admin {
 			<form id="mati-settings-form">
 				<?php wp_nonce_field( 'mati_save_settings', 'mati_settings_nonce' ); ?>
 
+				<!-- サイト保護アコーディオン -->
+				<div class="mati-accordion-section" data-section="content-protection">
+					<button type="button" class="mati-accordion-header"
+					        id="header-content-protection"
+					        aria-expanded="true"
+					        aria-controls="accordion-content-protection">
+						<span class="mati-accordion-title">サイト保護</span>
+						<span class="mati-accordion-icon" aria-hidden="true"></span>
+					</button>
+					<div id="accordion-content-protection"
+					     class="mati-accordion-content"
+					     role="region"
+					     aria-labelledby="header-content-protection"
+					     aria-hidden="false">
+
+						<!-- 親チェックボックス -->
+						<div class="mati-form-group">
+							<label>
+								<input type="checkbox" id="mati-content-protection-enabled" name="content_protection_enabled" value="1" <?php checked( ! empty( $settings['content_protection_enabled'] ) ); ?>>
+								<strong>サイト保護をすべて有効にする</strong>
+							</label>
+							<p class="description">※ これらの機能は完全な保護ではなく、あくまで抑止力として機能します。</p>
+						</div>
+
+						<!-- 子チェックボックス -->
+						<div class="mati-subsection">
+							<div class="mati-form-group">
+								<label>
+									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="disable_right_click" value="1" <?php checked( ! empty( $settings['disable_right_click'] ) ); ?>>
+									右クリック禁止
+								</label>
+								<p class="description">マウスの右クリックメニューを無効化します。画像やテキストのコピーを抑止できます。</p>
+							</div>
+							<div class="mati-form-group">
+								<label>
+									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="disable_devtools_keys" value="1" <?php checked( ! empty( $settings['disable_devtools_keys'] ) ); ?>>
+									デベロッパーツール系キー無効化（F12, Ctrl+Shift+I等）
+								</label>
+								<p class="description">ブラウザの開発者ツールを開くキーボードショートカットを無効化します。<br>※ ブラウザの仕様により、一部のショートカットはブロックできない場合があります。</p>
+							</div>
+							<div class="mati-form-group">
+								<label>
+									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="disable_save_keys" value="1" <?php checked( ! empty( $settings['disable_save_keys'] ) ); ?>>
+									サイト保存キー無効化（Ctrl+S等）
+								</label>
+								<p class="description">ページ保存のキーボードショートカットを無効化します。</p>
+							</div>
+							<div class="mati-form-group">
+								<label>
+									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="disable_text_selection" value="1" <?php checked( ! empty( $settings['disable_text_selection'] ) ); ?>>
+									テキスト選択禁止
+								</label>
+								<p class="description">ページ上のテキストを選択できないようにします。コピー防止に役立ちます。</p>
+							</div>
+							<div class="mati-form-group">
+								<label>
+									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="disable_image_drag" value="1" <?php checked( ! empty( $settings['disable_image_drag'] ) ); ?>>
+									画像ドラッグ禁止
+								</label>
+								<p class="description">画像のドラッグ＆ドロップでの保存を無効化します。</p>
+							</div>
+							<div class="mati-form-group">
+								<label>
+									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="disable_print" value="1" <?php checked( ! empty( $settings['disable_print'] ) ); ?>>
+									印刷禁止
+								</label>
+								<p class="description">ページの印刷機能を無効化します。印刷時にコンテンツが表示されなくなります。</p>
+							</div>
+							<div class="mati-form-group">
+								<label>
+									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="add_noarchive_meta" value="1" <?php checked( ! empty( $settings['add_noarchive_meta'] ) ); ?>>
+									検索エンジンのキャッシュ保存を拒否（noarchive）
+								</label>
+								<p class="description">検索エンジンにページのキャッシュを保存しないよう指示します。</p>
+							</div>
+							<div class="mati-form-group">
+								<label>
+									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="add_noai_meta" value="1" <?php checked( ! empty( $settings['add_noai_meta'] ) ); ?>>
+									AI学習防止メタタグ（noai, noimageai）を追加
+								</label>
+								<p class="description">AI学習用のクローラーに対してコンテンツの学習を拒否する意思表示を行います。</p>
+							</div>
+						</div>
+
+					</div>
+				</div>
+
 				<!-- 不要な情報の非表示 -->
 				<div class="mati-accordion-section" data-section="meta-removal">
 					<button type="button" class="mati-accordion-header"
 					        id="header-meta-removal"
-					        aria-expanded="true"
+					        aria-expanded="false"
 					        aria-controls="accordion-meta-removal">
 						<span class="mati-accordion-title">不要な情報の非表示</span>
 						<span class="mati-accordion-icon" aria-hidden="true"></span>
@@ -189,7 +279,8 @@ class Mati_Admin {
 					     class="mati-accordion-content"
 					     role="region"
 					     aria-labelledby="header-meta-removal"
-					     aria-hidden="false">
+					     aria-hidden="true"
+					     style="display: none;">
 
 						<!-- 親チェックボックス -->
 						<div class="mati-form-group">
@@ -248,86 +339,6 @@ class Mati_Admin {
 					</div>
 				</div>
 
-				<!-- コンテンツ保護アコーディオン -->
-				<div class="mati-accordion-section" data-section="content-protection">
-					<button type="button" class="mati-accordion-header"
-					        id="header-content-protection"
-					        aria-expanded="true"
-					        aria-controls="accordion-content-protection">
-						<span class="mati-accordion-title">コンテンツ保護</span>
-						<span class="mati-accordion-icon" aria-hidden="true"></span>
-					</button>
-					<div id="accordion-content-protection"
-					     class="mati-accordion-content"
-					     role="region"
-					     aria-labelledby="header-content-protection"
-					     aria-hidden="false">
-
-						<!-- 親チェックボックス -->
-						<div class="mati-form-group">
-							<label>
-								<input type="checkbox" id="mati-content-protection-enabled" name="content_protection_enabled" value="1" <?php checked( ! empty( $settings['content_protection_enabled'] ) ); ?>>
-								<strong>コンテンツ保護をすべて有効にする</strong>
-							</label>
-							<p class="description">※ これらの機能は完全な保護ではなく、あくまで抑止力として機能します。</p>
-						</div>
-
-						<!-- 子チェックボックス -->
-						<div class="mati-subsection">
-							<div class="mati-form-group">
-								<label>
-									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="disable_right_click" value="1" <?php checked( ! empty( $settings['disable_right_click'] ) ); ?>>
-									右クリック禁止
-								</label>
-								<p class="description">マウスの右クリックメニューを無効化します。画像やテキストのコピーを抑止できます。</p>
-							</div>
-							<div class="mati-form-group">
-								<label>
-									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="disable_devtools_keys" value="1" <?php checked( ! empty( $settings['disable_devtools_keys'] ) ); ?>>
-									デベロッパーツール系キー無効化（F12, Ctrl+Shift+I等）
-								</label>
-								<p class="description">ブラウザの開発者ツールを開くキーボードショートカットを無効化します。</p>
-							</div>
-							<div class="mati-form-group">
-								<label>
-									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="disable_save_keys" value="1" <?php checked( ! empty( $settings['disable_save_keys'] ) ); ?>>
-									サイト保存キー無効化（Ctrl+S等）
-								</label>
-								<p class="description">ページ保存のキーボードショートカットを無効化します。</p>
-							</div>
-							<div class="mati-form-group">
-								<label>
-									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="disable_text_selection" value="1" <?php checked( ! empty( $settings['disable_text_selection'] ) ); ?>>
-									テキスト選択禁止
-								</label>
-								<p class="description">ページ上のテキストを選択できないようにします。コピー防止に役立ちます。</p>
-							</div>
-							<div class="mati-form-group">
-								<label>
-									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="disable_image_drag" value="1" <?php checked( ! empty( $settings['disable_image_drag'] ) ); ?>>
-									画像ドラッグ禁止
-								</label>
-								<p class="description">画像のドラッグ＆ドロップでの保存を無効化します。</p>
-							</div>
-							<div class="mati-form-group">
-								<label>
-									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="disable_print" value="1" <?php checked( ! empty( $settings['disable_print'] ) ); ?>>
-									印刷禁止
-								</label>
-								<p class="description">ページの印刷機能を無効化します。印刷時にコンテンツが表示されなくなります。</p>
-							</div>
-							<div class="mati-form-group">
-								<label>
-									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="add_noai_meta" value="1" <?php checked( ! empty( $settings['add_noai_meta'] ) ); ?>>
-									AI学習防止メタタグ（noai, noimageai）を追加
-								</label>
-								<p class="description">AI学習用のクローラーに対してコンテンツの学習を拒否する意思表示を行います。</p>
-							</div>
-						</div>
-
-					</div>
-				</div>
-
 				<!-- SEOアコーディオン -->
 				<div class="mati-accordion-section" data-section="seo">
 					<button type="button" class="mati-accordion-header"
@@ -354,6 +365,14 @@ class Mati_Admin {
 							<label for="mati-bing-verification">Bing Webmaster Tools 認証コード</label>
 							<input type="text" id="mati-bing-verification" name="bing_verification" class="regular-text" value="<?php echo esc_attr( $settings['bing_verification'] ?? '' ); ?>" placeholder="例: 1234567890ABCDEF1234567890ABCDEF">
 							<p class="description">Bing Webmaster Toolsの認証メタタグのcontent値を入力してください</p>
+						</div>
+
+						<div class="mati-form-group">
+							<label>
+								<input type="checkbox" name="enable_jsonld" value="1" <?php checked( ! empty( $settings['enable_jsonld'] ) ); ?>>
+								JSON-LD構造化データを出力
+							</label>
+							<p class="description">WebSite、Organization、BreadcrumbListの構造化データを自動生成してSEOを改善します。</p>
 						</div>
 
 					</div>

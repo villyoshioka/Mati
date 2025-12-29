@@ -74,12 +74,14 @@ class Mati_Settings {
 			'disable_text_selection'     => false,
 			'disable_image_drag'         => false,
 			'disable_print'              => false,
+			'add_noarchive_meta'         => false,
 			'add_noai_meta'              => false,
 
 			// SEO
 			'google_verification'        => '',
 			'bing_verification'          => '',
 			'fediverse_profile_urls'     => array(),
+			'enable_jsonld'              => false,
 		);
 	}
 
@@ -118,7 +120,9 @@ class Mati_Settings {
 			'disable_text_selection',
 			'disable_image_drag',
 			'disable_print',
+			'add_noarchive_meta',
 			'add_noai_meta',
+			'enable_jsonld',
 		);
 
 		foreach ( $checkbox_keys as $key ) {
