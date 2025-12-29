@@ -448,7 +448,7 @@ class Mati_Admin {
 
 			<!-- プラグイン情報 -->
 			<div class="mati-plugin-info">
-				<p>Mati <a href="https://github.com/villyoshi/mati/releases/tag/v<?php echo esc_attr( MATI_VERSION ); ?>" target="_blank" rel="noopener noreferrer">v<?php echo esc_html( MATI_VERSION ); ?></a></p>
+				<p>Mati <a href="https://github.com/villyoshioka/mati/releases/tag/v<?php echo esc_attr( MATI_VERSION ); ?>" target="_blank" rel="noopener noreferrer">v<?php echo esc_html( MATI_VERSION ); ?></a></p>
 			</div>
 
 		</div>
