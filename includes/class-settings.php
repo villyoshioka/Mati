@@ -60,6 +60,7 @@ class Mati_Settings {
 			// メタタグ削除系
 			'meta_removal_enabled'       => false, // 親チェックボックス
 			'remove_generator'           => false,
+			'remove_rest_api_link'       => false,
 			'remove_oembed'              => false,
 			'remove_rsd'                 => false,
 			'remove_wlwmanifest'         => false,
@@ -75,6 +76,7 @@ class Mati_Settings {
 			'disable_image_drag'         => false,
 			'disable_print'              => false,
 			'add_noarchive_meta'         => false,
+			'add_noimageindex_meta'      => false,
 			'add_noai_meta'              => false,
 
 			// SEO
@@ -108,6 +110,7 @@ class Mati_Settings {
 		$checkbox_keys = array(
 			'meta_removal_enabled',
 			'remove_generator',
+			'remove_rest_api_link',
 			'remove_oembed',
 			'remove_rsd',
 			'remove_wlwmanifest',
@@ -121,6 +124,7 @@ class Mati_Settings {
 			'disable_image_drag',
 			'disable_print',
 			'add_noarchive_meta',
+			'add_noimageindex_meta',
 			'add_noai_meta',
 			'enable_jsonld',
 		);

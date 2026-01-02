@@ -1,0 +1,11 @@
+# Claude
+.claude/
+
+# Build artifacts
+*.zip
+
+# macOS
+.DS_Store
+
+# WordPress
+wp-config.php

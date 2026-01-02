@@ -209,7 +209,7 @@
 
 .mati-form-group label {
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	margin-bottom: 8px;
 	font-weight: 600;
 	color: var(--mati-color-text);
@@ -1073,5 +1073,127 @@ input[type="text"].regular-text {
 
 	.mati-fediverse-url-row .mati-remove-url {
 		width: 100%;
+	}
+}
+
+/* ========================================
+   ツールチップ
+   ======================================== */
+
+/* ツールチップトリガー (? アイコン) */
+.mati-tooltip-trigger {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	margin-left: 6px;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--mati-color-text-tertiary);
+	background: var(--mati-color-bg-lighter);
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+	transition: all 0.15s ease;
+	flex-shrink: 0;
+	vertical-align: middle;
+	position: relative;
+	user-select: none;
+}
+
+.mati-tooltip-trigger:hover {
+	color: var(--mati-color-text);
+}
+
+.mati-tooltip-trigger:focus {
+	outline: none;
+}
+
+/* アクティブ状態（ツールチップ表示中） */
+.mati-tooltip-trigger.active {
+	/* クリック前の見た目を維持 */
+}
+
+/* ツールチップコンテンツ */
+.mati-tooltip-content {
+	display: none;
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	bottom: calc(100% + 8px);
+	min-width: 200px;
+	max-width: 320px;
+	padding: 10px 12px;
+	background: var(--mati-color-text);
+	color: var(--mati-color-bg-white);
+	font-size: 13px;
+	line-height: 1.5;
+	border-radius: 4px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	z-index: 10000;
+	pointer-events: none;
+	white-space: normal;
+	word-wrap: break-word;
+}
+
+/* ツールチップの矢印 */
+.mati-tooltip-content::after {
+	content: '';
+	position: absolute;
+	top: 100%;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 0;
+	height: 0;
+	border-left: 6px solid transparent;
+	border-right: 6px solid transparent;
+	border-top: 6px solid var(--mati-color-text);
+}
+
+/* 表示状態 */
+.mati-tooltip-content.show {
+	display: block;
+	animation: matiTooltipFadeIn 0.15s ease-out;
+}
+
+/* フェードインアニメーション */
+@keyframes matiTooltipFadeIn {
+	from {
+		opacity: 0;
+		transform: translateX(-50%) translateY(-4px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(-50%) translateY(0);
+	}
+}
+
+/* ツールチップラッパー */
+.mati-tooltip-wrapper {
+	position: relative;
+	display: inline-block;
+	vertical-align: middle;
+}
+
+/* ラベル内のツールチップ調整 */
+.mati-form-group label .mati-tooltip-wrapper {
+	margin-left: 4px;
+}
+
+/* モバイル対応 */
+@media screen and (max-width: 480px) {
+	.mati-tooltip-trigger {
+		width: 22px;
+		height: 22px;
+		font-size: 13px;
+		margin-left: 8px;
+	}
+
+	.mati-tooltip-content {
+		min-width: 180px;
+		max-width: 280px;
+		font-size: 12px;
+		padding: 8px 10px;
 	}
 }

@@ -1,11 +1,11 @@
 # Mati
 
-**サイトを悪意から守る。コンテンツ保護・メタタグ管理・SEO設定を簡単に制御できるWordPressプラグイン。**
+**コンテンツ保護・メタタグ管理・SEO設定を簡単に制御できるWordPressプラグイン。**
 
 [![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-blue.svg)](https://www.php.net/)
-[![Version](https://img.shields.io/badge/Version-1.1.0-green.svg)](https://github.com/villyoshioka/mati/releases)
+[![Version](https://img.shields.io/badge/Version-1.2.0-green.svg)](https://github.com/villyoshioka/mati/releases)
 
 > **注意**: **このプラグインについて、コードは公開していますが、サポートは行っていません。**
 
