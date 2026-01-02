@@ -42,9 +42,6 @@ class Mati_Admin {
 	 * 管理メニューを追加
 	 */
 	public function add_admin_menu() {
-		// CarryPodが有効な場合は81、無効な場合は4（設定の上）
-		$priority = function_exists( 'carry_pod_init' ) ? 81 : 4;
-
 		add_menu_page(
 			'Mati',
 			'Mati',
@@ -52,7 +49,7 @@ class Mati_Admin {
 			'mati',
 			array( $this, 'render_settings_page' ),
 			'dashicons-shield',
-			$priority
+			4 // 設定の上に表示
 		);
 	}
 
@@ -179,13 +176,13 @@ class Mati_Admin {
 			<form id="mati-settings-form">
 				<?php wp_nonce_field( 'mati_save_settings', 'mati_settings_nonce' ); ?>
 
-				<!-- サイト保護アコーディオン -->
+				<!-- コンテンツ保護アコーディオン -->
 				<div class="mati-accordion-section" data-section="content-protection">
 					<button type="button" class="mati-accordion-header"
 					        id="header-content-protection"
 					        aria-expanded="true"
 					        aria-controls="accordion-content-protection">
-						<span class="mati-accordion-title">サイト保護</span>
+						<span class="mati-accordion-title">コンテンツ保護</span>
 						<span class="mati-accordion-icon" aria-hidden="true"></span>
 					</button>
 					<div id="accordion-content-protection"
@@ -198,7 +195,7 @@ class Mati_Admin {
 						<div class="mati-form-group">
 							<label>
 								<input type="checkbox" id="mati-content-protection-enabled" name="content_protection_enabled" value="1" <?php checked( ! empty( $settings['content_protection_enabled'] ) ); ?>>
-								<strong>サイト保護をすべて有効にする</strong>
+								<strong>コンテンツ保護をすべて有効にする</strong>
 							</label>
 							<p class="description">※ これらの機能は完全な保護ではなく、あくまで抑止力として機能します。</p>
 						</div>
@@ -209,57 +206,91 @@ class Mati_Admin {
 								<label>
 									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="disable_right_click" value="1" <?php checked( ! empty( $settings['disable_right_click'] ) ); ?>>
 									右クリック禁止
+									<span class="mati-tooltip-wrapper">
+										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="mati-tooltip-content" role="tooltip">マウスの右クリックメニューを無効化します。画像やテキストのコピーを抑止できます。</span>
+									</span>
 								</label>
-								<p class="description">マウスの右クリックメニューを無効化します。画像やテキストのコピーを抑止できます。</p>
 							</div>
 							<div class="mati-form-group">
 								<label>
 									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="disable_devtools_keys" value="1" <?php checked( ! empty( $settings['disable_devtools_keys'] ) ); ?>>
 									デベロッパーツール系キー無効化（F12, Ctrl+Shift+I等）
+									<span class="mati-tooltip-wrapper">
+										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="mati-tooltip-content" role="tooltip">ブラウザの開発者ツールを開くキーボードショートカットを無効化します。<br>※ ブラウザの仕様により、一部のショートカットはブロックできない場合があります。</span>
+									</span>
 								</label>
-								<p class="description">ブラウザの開発者ツールを開くキーボードショートカットを無効化します。<br>※ ブラウザの仕様により、一部のショートカットはブロックできない場合があります。</p>
 							</div>
 							<div class="mati-form-group">
 								<label>
 									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="disable_save_keys" value="1" <?php checked( ! empty( $settings['disable_save_keys'] ) ); ?>>
 									サイト保存キー無効化（Ctrl+S等）
+									<span class="mati-tooltip-wrapper">
+										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="mati-tooltip-content" role="tooltip">ページ保存のキーボードショートカットを無効化します。</span>
+									</span>
 								</label>
-								<p class="description">ページ保存のキーボードショートカットを無効化します。</p>
 							</div>
 							<div class="mati-form-group">
 								<label>
 									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="disable_text_selection" value="1" <?php checked( ! empty( $settings['disable_text_selection'] ) ); ?>>
 									テキスト選択禁止
+									<span class="mati-tooltip-wrapper">
+										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="mati-tooltip-content" role="tooltip">ページ上のテキストを選択できないようにします。コピー防止に役立ちます。</span>
+									</span>
 								</label>
-								<p class="description">ページ上のテキストを選択できないようにします。コピー防止に役立ちます。</p>
 							</div>
 							<div class="mati-form-group">
 								<label>
 									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="disable_image_drag" value="1" <?php checked( ! empty( $settings['disable_image_drag'] ) ); ?>>
 									画像ドラッグ禁止
+									<span class="mati-tooltip-wrapper">
+										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="mati-tooltip-content" role="tooltip">画像のドラッグ＆ドロップでの保存を無効化します。</span>
+									</span>
 								</label>
-								<p class="description">画像のドラッグ＆ドロップでの保存を無効化します。</p>
 							</div>
 							<div class="mati-form-group">
 								<label>
 									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="disable_print" value="1" <?php checked( ! empty( $settings['disable_print'] ) ); ?>>
 									印刷禁止
+									<span class="mati-tooltip-wrapper">
+										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="mati-tooltip-content" role="tooltip">ページの印刷機能を無効化します。印刷時にコンテンツが表示されなくなります。</span>
+									</span>
 								</label>
-								<p class="description">ページの印刷機能を無効化します。印刷時にコンテンツが表示されなくなります。</p>
 							</div>
 							<div class="mati-form-group">
 								<label>
 									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="add_noarchive_meta" value="1" <?php checked( ! empty( $settings['add_noarchive_meta'] ) ); ?>>
 									検索エンジンのキャッシュ保存を拒否（noarchive）
+									<span class="mati-tooltip-wrapper">
+										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="mati-tooltip-content" role="tooltip">検索エンジンにページのキャッシュを保存しないよう指示します。</span>
+									</span>
 								</label>
-								<p class="description">検索エンジンにページのキャッシュを保存しないよう指示します。</p>
+							</div>
+							<div class="mati-form-group">
+								<label>
+									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="add_noimageindex_meta" value="1" <?php checked( ! empty( $settings['add_noimageindex_meta'] ) ); ?>>
+									画像の検索インデックス登録を拒否（noimageindex）
+									<span class="mati-tooltip-wrapper">
+										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="mati-tooltip-content" role="tooltip">検索エンジンに画像をインデックスしないよう指示します。画像検索結果に表示されなくなります。</span>
+									</span>
+								</label>
 							</div>
 							<div class="mati-form-group">
 								<label>
 									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-content-protection-enabled" name="add_noai_meta" value="1" <?php checked( ! empty( $settings['add_noai_meta'] ) ); ?>>
 									AI学習防止メタタグ（noai, noimageai）を追加
+									<span class="mati-tooltip-wrapper">
+										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="mati-tooltip-content" role="tooltip">AI学習用のクローラーに対してコンテンツの学習を拒否する意思表示を行います。</span>
+									</span>
 								</label>
-								<p class="description">AI学習用のクローラーに対してコンテンツの学習を拒否する意思表示を行います。</p>
 							</div>
 						</div>
 
@@ -296,43 +327,71 @@ class Mati_Admin {
 								<label>
 									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-meta-removal-enabled" name="remove_generator" value="1" <?php checked( ! empty( $settings['remove_generator'] ) ); ?>>
 									WordPressバージョン情報の非表示
+									<span class="mati-tooltip-wrapper">
+										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="mati-tooltip-content" role="tooltip">WordPressのバージョン情報を非表示にします。セキュリティ向上に役立ちます。静的化する場合も事前に非表示にしておくことを推奨します。</span>
+									</span>
 								</label>
-								<p class="description">WordPressのバージョン情報を非表示にします。セキュリティ向上に役立ちます。静的化する場合も事前に非表示にしておくことを推奨します。</p>
+							</div>
+							<div class="mati-form-group">
+								<label>
+									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-meta-removal-enabled" name="remove_rest_api_link" value="1" <?php checked( ! empty( $settings['remove_rest_api_link'] ) ); ?>>
+									REST API (wp-json) リンクの非表示
+									<span class="mati-tooltip-wrapper">
+										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="mati-tooltip-content" role="tooltip">REST APIディスカバリーリンク（&lt;link rel="https://api.w.org/"&gt;）を非表示にします。静的化する場合は非表示にすることを推奨します。</span>
+									</span>
+								</label>
 							</div>
 							<div class="mati-form-group">
 								<label>
 									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-meta-removal-enabled" name="remove_oembed" value="1" <?php checked( ! empty( $settings['remove_oembed'] ) ); ?>>
 									oEmbedリンクの非表示
+									<span class="mati-tooltip-wrapper">
+										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="mati-tooltip-content" role="tooltip">oEmbed関連のリンクを非表示にします。外部サービスの埋め込みを使わない場合や静的化する場合は非表示にすることを推奨します。</span>
+									</span>
 								</label>
-								<p class="description">oEmbed関連のリンクを非表示にします。外部サービスの埋め込みを使わない場合や静的化する場合は非表示にすることを推奨します。</p>
 							</div>
 							<div class="mati-form-group">
 								<label>
 									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-meta-removal-enabled" name="remove_rsd" value="1" <?php checked( ! empty( $settings['remove_rsd'] ) ); ?>>
 									RSDリンクの非表示
+									<span class="mati-tooltip-wrapper">
+										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="mati-tooltip-content" role="tooltip">外部ブログエディタ用のRSDリンクを非表示にします。通常は不要で、静的化する場合も非表示にすることを推奨します。</span>
+									</span>
 								</label>
-								<p class="description">外部ブログエディタ用のRSDリンクを非表示にします。通常は不要で、静的化する場合も非表示にすることを推奨します。</p>
 							</div>
 							<div class="mati-form-group">
 								<label>
 									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-meta-removal-enabled" name="remove_wlwmanifest" value="1" <?php checked( ! empty( $settings['remove_wlwmanifest'] ) ); ?>>
 									wlwmanifestリンクの非表示
+									<span class="mati-tooltip-wrapper">
+										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="mati-tooltip-content" role="tooltip">Windows Live Writer用のリンクを非表示にします。Windows Live Writerはサポート終了済みのため、非表示にすることを推奨します。静的化する場合も不要です。</span>
+									</span>
 								</label>
-								<p class="description">Windows Live Writer用のリンクを非表示にします。Windows Live Writerはサポート終了済みのため、非表示にすることを推奨します。静的化する場合も不要です。</p>
 							</div>
 							<div class="mati-form-group">
 								<label>
 									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-meta-removal-enabled" name="remove_shortlink" value="1" <?php checked( ! empty( $settings['remove_shortlink'] ) ); ?>>
 									shortlinkの非表示
+									<span class="mati-tooltip-wrapper">
+										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="mati-tooltip-content" role="tooltip">短縮URLへのリンクを非表示にします。短縮URLを使用していない場合や静的化する場合は非表示にすることを推奨します。</span>
+									</span>
 								</label>
-								<p class="description">短縮URLへのリンクを非表示にします。短縮URLを使用していない場合や静的化する場合は非表示にすることを推奨します。</p>
 							</div>
 							<div class="mati-form-group">
 								<label>
 									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-meta-removal-enabled" name="remove_pingback" value="1" <?php checked( ! empty( $settings['remove_pingback'] ) ); ?>>
 									pingbackの無効化
+									<span class="mati-tooltip-wrapper">
+										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="mati-tooltip-content" role="tooltip">ピンバック機能を無効化します。スパムコメント対策に効果的で、静的化する場合は不要な機能です。</span>
+									</span>
 								</label>
-								<p class="description">ピンバック機能を無効化します。スパムコメント対策に効果的で、静的化する場合は不要な機能です。</p>
 							</div>
 						</div>
 
@@ -356,23 +415,36 @@ class Mati_Admin {
 					     style="display: none;">
 
 						<div class="mati-form-group">
-							<label for="mati-google-verification">Google Search Console 認証コード</label>
+							<label for="mati-google-verification">
+								Google Search Console 認証コード
+								<span class="mati-tooltip-wrapper">
+									<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+									<span class="mati-tooltip-content" role="tooltip">Google Search Consoleの認証メタタグのcontent値を入力してください</span>
+								</span>
+							</label>
 							<input type="text" id="mati-google-verification" name="google_verification" class="regular-text" value="<?php echo esc_attr( $settings['google_verification'] ?? '' ); ?>" placeholder="例: 1234567890abcdef">
-							<p class="description">Google Search Consoleの認証メタタグのcontent値を入力してください</p>
 						</div>
 
 						<div class="mati-form-group">
-							<label for="mati-bing-verification">Bing Webmaster Tools 認証コード</label>
+							<label for="mati-bing-verification">
+								Bing Webmaster Tools 認証コード
+								<span class="mati-tooltip-wrapper">
+									<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+									<span class="mati-tooltip-content" role="tooltip">Bing Webmaster Toolsの認証メタタグのcontent値を入力してください</span>
+								</span>
+							</label>
 							<input type="text" id="mati-bing-verification" name="bing_verification" class="regular-text" value="<?php echo esc_attr( $settings['bing_verification'] ?? '' ); ?>" placeholder="例: 1234567890ABCDEF1234567890ABCDEF">
-							<p class="description">Bing Webmaster Toolsの認証メタタグのcontent値を入力してください</p>
 						</div>
 
 						<div class="mati-form-group">
 							<label>
 								<input type="checkbox" name="enable_jsonld" value="1" <?php checked( ! empty( $settings['enable_jsonld'] ) ); ?>>
 								JSON-LD構造化データを出力
+								<span class="mati-tooltip-wrapper">
+									<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+									<span class="mati-tooltip-content" role="tooltip">WebSite、Organization、BreadcrumbListの構造化データを自動生成してSEOを改善します。</span>
+								</span>
 							</label>
-							<p class="description">WebSite、Organization、BreadcrumbListの構造化データを自動生成してSEOを改善します。</p>
 						</div>
 
 					</div>
@@ -395,8 +467,13 @@ class Mati_Admin {
 					     style="display: none;">
 
 						<div class="mati-form-group">
-							<label>プロフィール URL</label>
-							<p class="description" style="margin-top: 0; margin-bottom: 10px;">Misskey・Mastodonで本人確認マーク（緑のチェック✓）を付けるためのプロフィールURL（最大5個）。<br>このサイトとプロフィールを紐付けることで、サイト所有者であることを証明し、なりすましを防止できます</p>
+							<label>
+								プロフィール URL
+								<span class="mati-tooltip-wrapper">
+									<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+									<span class="mati-tooltip-content" role="tooltip">Misskey・Mastodonで本人確認マーク（緑のチェック✓）を付けるためのプロフィールURL（最大5個）。このサイトとプロフィールを紐付けることで、サイト所有者であることを証明し、なりすましを防止できます</span>
+								</span>
+							</label>
 							<div id="mati-fediverse-urls-container">
 								<?php
 								$fediverse_urls = $settings['fediverse_profile_urls'] ?? array();

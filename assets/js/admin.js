@@ -417,6 +417,87 @@
 		// 初期表示時に削除ボタンの表示を更新
 		updateRemoveButtons();
 
+		// ========================================
+		// ツールチップ機能
+		// ========================================
+
+		// ツールチップの初期化
+		function initTooltips() {
+			// 既存のツールチップイベントをクリア（重複防止）
+			$(document).off('click.matiTooltip keydown.matiTooltip');
+			$(document).off('click.matiTooltipOutside');
+
+			// トリガークリック時の処理
+			$(document).on('click.matiTooltip', '.mati-tooltip-trigger', function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+
+				const $trigger = $(this);
+				const $wrapper = $trigger.closest('.mati-tooltip-wrapper');
+				const $tooltip = $wrapper.find('.mati-tooltip-content');
+				const isActive = $trigger.hasClass('active');
+
+				// 他のツールチップを全て閉じる
+				$('.mati-tooltip-trigger').removeClass('active');
+				$('.mati-tooltip-content').removeClass('show');
+
+				// クリックされたツールチップをトグル
+				if (!isActive) {
+					$trigger.addClass('active');
+					$tooltip.addClass('show');
+					$trigger.attr('aria-expanded', 'true');
+				} else {
+					$trigger.attr('aria-expanded', 'false');
+				}
+			});
+
+			// キーボード操作
+			$(document).on('keydown.matiTooltip', '.mati-tooltip-trigger', function(e) {
+				const $trigger = $(this);
+				const $wrapper = $trigger.closest('.mati-tooltip-wrapper');
+				const $tooltip = $wrapper.find('.mati-tooltip-content');
+
+				// Enter or Space: トグル
+				if (e.key === 'Enter' || e.key === ' ') {
+					e.preventDefault();
+					$trigger.trigger('click');
+				}
+
+				// Escape: 閉じる
+				if (e.key === 'Escape') {
+					e.preventDefault();
+					$trigger.removeClass('active');
+					$tooltip.removeClass('show');
+					$trigger.attr('aria-expanded', 'false');
+				}
+			});
+
+			// 外側クリックで閉じる
+			$(document).on('click.matiTooltipOutside', function(e) {
+				if (!$(e.target).closest('.mati-tooltip-wrapper').length) {
+					$('.mati-tooltip-trigger').removeClass('active');
+					$('.mati-tooltip-content').removeClass('show');
+					$('.mati-tooltip-trigger').attr('aria-expanded', 'false');
+				}
+			});
+
+			// フォーカスアウト時の処理
+			$('.mati-tooltip-trigger').on('blur', function() {
+				const $trigger = $(this);
+				// 短い遅延を設けて、他の要素へのフォーカス移動を確認
+				setTimeout(function() {
+					if (!$trigger.is(':focus')) {
+						$trigger.removeClass('active');
+						$trigger.closest('.mati-tooltip-wrapper').find('.mati-tooltip-content').removeClass('show');
+						$trigger.attr('aria-expanded', 'false');
+					}
+				}, 100);
+			});
+		}
+
+		// ツールチップ初期化を実行
+		initTooltips();
+
 	});
 
 })(jQuery);

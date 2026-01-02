@@ -58,6 +58,11 @@ class Mati_Frontend {
 			add_filter( 'the_generator', '__return_empty_string' );
 		}
 
+		if ( ! empty( $settings['remove_rest_api_link'] ) ) {
+			remove_action( 'wp_head', 'rest_output_link_wp_head', 10 );
+			remove_action( 'template_redirect', 'rest_output_link_header', 11 );
+		}
+
 		if ( ! empty( $settings['remove_oembed'] ) ) {
 			remove_action( 'wp_head', 'wp_oembed_add_discovery_links' );
 			remove_action( 'wp_head', 'wp_oembed_add_host_js' );
@@ -121,6 +126,10 @@ class Mati_Frontend {
 
 		if ( ! empty( $settings['add_noarchive_meta'] ) ) {
 			$robots_directives[] = 'noarchive';
+		}
+
+		if ( ! empty( $settings['add_noimageindex_meta'] ) ) {
+			$robots_directives[] = 'noimageindex';
 		}
 
 		if ( ! empty( $settings['add_noai_meta'] ) ) {
