@@ -69,6 +69,96 @@
 		}
 
 		// ========================================
+		// アコーディオン状態管理（LocalStorage）
+		// ========================================
+
+		/**
+		 * LocalStorageから特定のアコーディオンの状態を取得
+		 * @param {string} sectionId - セクションID
+		 * @return {boolean|null} - 保存された状態、またはnull
+		 */
+		function getAccordionState(sectionId) {
+			try {
+				const states = localStorage.getItem('mati_accordion_states');
+				if (!states) return null;
+
+				const parsed = JSON.parse(states);
+				return parsed[sectionId] !== undefined ? parsed[sectionId] : null;
+			} catch (e) {
+				console.error('LocalStorage読み込みエラー:', e);
+				return null;
+			}
+		}
+
+		/**
+		 * LocalStorageに特定のアコーディオンの状態を保存
+		 * @param {string} sectionId - セクションID
+		 * @param {boolean} isExpanded - 開いているか
+		 */
+		function saveAccordionState(sectionId, isExpanded) {
+			try {
+				let states = {};
+				const existing = localStorage.getItem('mati_accordion_states');
+
+				if (existing) {
+					states = JSON.parse(existing);
+				}
+
+				states[sectionId] = isExpanded;
+				localStorage.setItem('mati_accordion_states', JSON.stringify(states));
+			} catch (e) {
+				console.error('LocalStorage保存エラー:', e);
+			}
+		}
+
+		/**
+		 * すべてのアコーディオンの現在の状態をLocalStorageに一括保存
+		 */
+		function saveAllAccordionStates() {
+			try {
+				const states = {};
+				$('.mati-accordion-header').each(function() {
+					const sectionId = $(this).closest('.mati-accordion-section').data('section');
+					const isExpanded = $(this).attr('aria-expanded') === 'true';
+					states[sectionId] = isExpanded;
+				});
+				localStorage.setItem('mati_accordion_states', JSON.stringify(states));
+			} catch (e) {
+				console.error('LocalStorage一括保存エラー:', e);
+			}
+		}
+
+		/**
+		 * アコーディオンの初期化
+		 * - LocalStorageから保存された状態を復元
+		 * - 保存された状態がない場合はデフォルト状態を使用
+		 */
+		function initAccordions() {
+			$('.mati-accordion-section').each(function() {
+				const $section = $(this);
+				const sectionId = $section.data('section');
+				const $header = $section.find('.mati-accordion-header');
+				const $content = $section.find('.mati-accordion-content');
+
+				// LocalStorageから状態を取得
+				const savedState = getAccordionState(sectionId);
+
+				if (savedState !== null) {
+					// 保存された状態がある場合はそれを使用
+					$header.attr('aria-expanded', savedState);
+					$content.attr('aria-hidden', !savedState);
+
+					if (savedState) {
+						$content.show();
+					} else {
+						$content.hide();
+					}
+				}
+				// 保存された状態がない場合は、PHPで設定されたデフォルト状態をそのまま使用
+			});
+		}
+
+		// ========================================
 		// アコーディオン機能
 		// ========================================
 
@@ -171,6 +261,9 @@
 						// 保存成功時は未保存フラグをクリア
 						hasUnsavedChanges = false;
 
+						// アコーディオンの状態をLocalStorageに保存
+						saveAllAccordionStates();
+
 						$message
 							.removeClass('notice-error')
 							.addClass('notice notice-success')
@@ -238,6 +331,9 @@
 						if (response.success) {
 							// リセット成功時は未保存フラグをクリア（リロード前に）
 							hasUnsavedChanges = false;
+
+							// アコーディオンの状態もリセット
+							localStorage.removeItem('mati_accordion_states');
 
 							$message
 								.removeClass('notice-error')
@@ -342,6 +438,9 @@
 						if (response.success) {
 							// インポート成功時は未保存フラグをクリア（リロード前に）
 							hasUnsavedChanges = false;
+
+							// アコーディオンの状態もリセット（新しい設定をインポートするため）
+							localStorage.removeItem('mati_accordion_states');
 
 							alert(response.data.message);
 							location.reload();
@@ -497,6 +596,13 @@
 
 		// ツールチップ初期化を実行
 		initTooltips();
+
+		// ========================================
+		// アコーディオンの初期化
+		// ========================================
+
+		// アコーディオンの状態を復元
+		initAccordions();
 
 	});
 
