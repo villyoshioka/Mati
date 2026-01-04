@@ -171,6 +171,8 @@ class Mati_Admin {
 			</div>
 			<?php endif; ?>
 
+			<?php $this->check_carry_pod_compatibility(); ?>
+
 			<div id="mati-message" class="notice" style="display:none;"></div>
 
 			<form id="mati-settings-form">
@@ -632,5 +634,39 @@ class Mati_Admin {
 		}
 
 		wp_send_json_success( array( 'message' => '設定をインポートしました。' ) );
+	}
+
+	/**
+	 * CarryPod互換性チェック
+	 */
+	public function check_carry_pod_compatibility() {
+		// CarryPodがインストールされていない場合は何も表示しない
+		if ( ! defined( 'CP_VERSION' ) ) {
+			return;
+		}
+
+		$cp_version = CP_VERSION;
+
+		// バージョン形式の検証（セマンティックバージョニング: x.y.z または x.y.z-suffix）
+		if ( ! preg_match( '/^\d+\.\d+\.\d+(?:-[a-zA-Z0-9\-]+)?$/', $cp_version ) ) {
+			// 不正なバージョン形式の場合は警告を表示せず終了
+			return;
+		}
+
+		// 両方とも x.3.0以降の場合は何も表示しない
+		if ( version_compare( $cp_version, '2.3.0', '>=' ) ) {
+			return;
+		}
+
+		// CarryPodが古い場合は警告を表示
+		?>
+		<div class="notice notice-warning">
+			<p>
+				<strong>⚠️ CarryPod連携</strong><br>
+				CarryPod 2.3.0以降にアップデートすると、双方向連携機能が有効になります。<br>
+				<small>現在: CarryPod <?php echo esc_html( $cp_version ); ?> → 推奨: CarryPod 2.3.0+</small>
+			</p>
+		</div>
+		<?php
 	}
 }
