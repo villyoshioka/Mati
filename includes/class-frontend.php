@@ -242,24 +242,153 @@ class Mati_Frontend {
 		$settings = $this->settings_manager->get_settings();
 		$scripts  = array();
 
+		// Seedからランダムジェネレータを初期化
+		$seed = isset( $settings['obfuscation_seed'] ) ? $settings['obfuscation_seed'] : '';
+		$rng  = $this->create_rng_from_seed( $seed );
+
 		// 右クリック禁止
 		if ( ! empty( $settings['disable_right_click'] ) ) {
-			$scripts[] = 'document["\x61\x64\x64\x45\x76\x65\x6e\x74\x4c\x69\x73\x74\x65\x6e\x65\x72"]("context"+"menu",function(_0x7g8h){_0x7g8h["\x70\x72\x65\x76\x65\x6e\x74\x44\x65\x66\x61\x75\x6c\x74"]();return!1});';
+			$var_name            = $this->generate_var_name( $rng );
+			$enc_addEventListener = $this->encode_string( 'addEventListener', $rng );
+			$enc_preventDefault  = $this->encode_string( 'preventDefault', $rng );
+
+			$scripts[] = sprintf(
+				'document["%s"]("context"+"menu",function(%s){%s["%s"]();return!1});',
+				$enc_addEventListener,
+				$var_name,
+				$var_name,
+				$enc_preventDefault
+			);
 		}
 
 		// デベロッパーツール系キー無効化
 		if ( ! empty( $settings['disable_devtools_keys'] ) ) {
-			$scripts[] = '!function(){var _0x1a2b=window["\x6c\x6f\x63\x61\x74\x69\x6f\x6e"]["\x68\x6f\x73\x74\x6e\x61\x6d\x65"];if(_0x1a2b["\x65\x6e\x64\x73\x57\x69\x74\x68"]("."+"\x6c\x6f\x63\x61\x6c")||_0x1a2b==="\x6c\x6f\x63\x61\x6c\x68\x6f\x73\x74"||_0x1a2b==="127.0.0.1")return;var _0x3c4d=/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i["\x74\x65\x73\x74"](navigator["\x75\x73\x65\x72\x41\x67\x65\x6e\x74"])||"\x6f\x6e\x74\x6f\x75\x63\x68\x73\x74\x61\x72\x74"in window||navigator["\x6d\x61\x78\x54\x6f\x75\x63\x68\x50\x6f\x69\x6e\x74\x73"]>0;document["\x61\x64\x64\x45\x76\x65\x6e\x74\x4c\x69\x73\x74\x65\x6e\x65\x72"]("key"+"down",function(_0x5e6f){if(_0x5e6f["\x6b\x65\x79"]==="F"+"12"||_0x5e6f["\x6b\x65\x79\x43\x6f\x64\x65"]===123){_0x5e6f["\x70\x72\x65\x76\x65\x6e\x74\x44\x65\x66\x61\x75\x6c\x74"]();_0x5e6f["\x73\x74\x6f\x70\x50\x72\x6f\x70\x61\x67\x61\x74\x69\x6f\x6e"]();return!1}if(/^[IiJjCc]$/["\x74\x65\x73\x74"](_0x5e6f["\x6b\x65\x79"])){if(_0x5e6f["\x63\x74\x72\x6c\x4b\x65\x79"]&&_0x5e6f["\x73\x68\x69\x66\x74\x4b\x65\x79"]){_0x5e6f["\x70\x72\x65\x76\x65\x6e\x74\x44\x65\x66\x61\x75\x6c\x74"]();_0x5e6f["\x73\x74\x6f\x70\x50\x72\x6f\x70\x61\x67\x61\x74\x69\x6f\x6e"]();return!1}if(_0x5e6f["\x6d\x65\x74\x61\x4b\x65\x79"]&&_0x5e6f["\x61\x6c\x74\x4b\x65\x79"]){_0x5e6f["\x70\x72\x65\x76\x65\x6e\x74\x44\x65\x66\x61\x75\x6c\x74"]();_0x5e6f["\x73\x74\x6f\x70\x50\x72\x6f\x70\x61\x67\x61\x74\x69\x6f\x6e"]();return!1}}if(/^[Uu]$/["\x74\x65\x73\x74"](_0x5e6f["\x6b\x65\x79"])){if(_0x5e6f["\x63\x74\x72\x6c\x4b\x65\x79"]&&!_0x5e6f["\x73\x68\x69\x66\x74\x4b\x65\x79"]&&!_0x5e6f["\x61\x6c\x74\x4b\x65\x79"]){_0x5e6f["\x70\x72\x65\x76\x65\x6e\x74\x44\x65\x66\x61\x75\x6c\x74"]();_0x5e6f["\x73\x74\x6f\x70\x50\x72\x6f\x70\x61\x67\x61\x74\x69\x6f\x6e"]();return!1}if(_0x5e6f["\x6d\x65\x74\x61\x4b\x65\x79"]&&!_0x5e6f["\x73\x68\x69\x66\x74\x4b\x65\x79"]&&!_0x5e6f["\x61\x6c\x74\x4b\x65\x79"]){_0x5e6f["\x70\x72\x65\x76\x65\x6e\x74\x44\x65\x66\x61\x75\x6c\x74"]();_0x5e6f["\x73\x74\x6f\x70\x50\x72\x6f\x70\x61\x67\x61\x74\x69\x6f\x6e"]();return!1}}},!0)}();';
+			$var1                = $this->generate_var_name( $rng );
+			$var2                = $this->generate_var_name( $rng );
+			$var3                = $this->generate_var_name( $rng );
+			$enc_location        = $this->encode_string( 'location', $rng );
+			$enc_hostname        = $this->encode_string( 'hostname', $rng );
+			$enc_endsWith        = $this->encode_string( 'endsWith', $rng );
+			$enc_test            = $this->encode_string( 'test', $rng );
+			$enc_userAgent       = $this->encode_string( 'userAgent', $rng );
+			$enc_addEventListener = $this->encode_string( 'addEventListener', $rng );
+			$enc_key             = $this->encode_string( 'key', $rng );
+			$enc_keyCode         = $this->encode_string( 'keyCode', $rng );
+			$enc_preventDefault  = $this->encode_string( 'preventDefault', $rng );
+			$enc_stopPropagation = $this->encode_string( 'stopPropagation', $rng );
+			$enc_ctrlKey         = $this->encode_string( 'ctrlKey', $rng );
+			$enc_shiftKey        = $this->encode_string( 'shiftKey', $rng );
+			$enc_metaKey         = $this->encode_string( 'metaKey', $rng );
+			$enc_altKey          = $this->encode_string( 'altKey', $rng );
+
+			$scripts[] = sprintf(
+				'!function(){var %s=window["%s"]["%s"];if(%s["%s"]("."+"local")||%s==="localhost"||%s==="127.0.0.1")return;var %s=/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i["%s"](navigator["%s"])||"ontouchstart"in window||navigator["maxTouchPoints"]>0;document["%s"]("key"+"down",function(%s){if(%s["%s"]==="F"+"12"||%s["%s"]===123){%s["%s"]();%s["%s"]();return!1}if(/^[IiJjCc]$/["%s"](%s["%s"])){if(%s["%s"]&&%s["%s"]){%s["%s"]();%s["%s"]();return!1}if(%s["%s"]&&%s["%s"]){%s["%s"]();%s["%s"]();return!1}}if(/^[Uu]$/["%s"](%s["%s"])){if(%s["%s"]&&!%s["%s"]&&!%s["%s"]){%s["%s"]();%s["%s"]();return!1}if(%s["%s"]&&!%s["%s"]&&!%s["%s"]){%s["%s"]();%s["%s"]();return!1}}},!0)}();',
+				$var1, $enc_location, $enc_hostname, $var1, $enc_endsWith, $var1, $var1,
+				$var2, $enc_test, $enc_userAgent,
+				$enc_addEventListener, $var3,
+				$var3, $enc_key, $var3, $enc_keyCode,
+				$var3, $enc_preventDefault, $var3, $enc_stopPropagation,
+				$enc_test, $var3, $enc_key,
+				$var3, $enc_ctrlKey, $var3, $enc_shiftKey,
+				$var3, $enc_preventDefault, $var3, $enc_stopPropagation,
+				$var3, $enc_metaKey, $var3, $enc_altKey,
+				$var3, $enc_preventDefault, $var3, $enc_stopPropagation,
+				$enc_test, $var3, $enc_key,
+				$var3, $enc_ctrlKey, $var3, $enc_shiftKey, $var3, $enc_altKey,
+				$var3, $enc_preventDefault, $var3, $enc_stopPropagation,
+				$var3, $enc_metaKey, $var3, $enc_shiftKey, $var3, $enc_altKey,
+				$var3, $enc_preventDefault, $var3, $enc_stopPropagation
+			);
 		}
 
 		// サイト保存キー無効化
 		if ( ! empty( $settings['disable_save_keys'] ) ) {
-			$scripts[] = 'document["\x61\x64\x64\x45\x76\x65\x6e\x74\x4c\x69\x73\x74\x65\x6e\x65\x72"]("key"+"down",function(_0x9i0j){if((_0x9i0j["\x63\x74\x72\x6c\x4b\x65\x79"]||_0x9i0j["\x6d\x65\x74\x61\x4b\x65\x79"])&&(_0x9i0j["\x6b\x65\x79"]==="s"||_0x9i0j["\x6b\x65\x79"]==="S")){_0x9i0j["\x70\x72\x65\x76\x65\x6e\x74\x44\x65\x66\x61\x75\x6c\x74"]();return!1}});';
+			$var_name            = $this->generate_var_name( $rng );
+			$enc_addEventListener = $this->encode_string( 'addEventListener', $rng );
+			$enc_ctrlKey         = $this->encode_string( 'ctrlKey', $rng );
+			$enc_metaKey         = $this->encode_string( 'metaKey', $rng );
+			$enc_key             = $this->encode_string( 'key', $rng );
+			$enc_preventDefault  = $this->encode_string( 'preventDefault', $rng );
+
+			$scripts[] = sprintf(
+				'document["%s"]("key"+"down",function(%s){if((%s["%s"]||%s["%s"])&&(%s["%s"]==="s"||%s["%s"]==="S")){%s["%s"]();return!1}});',
+				$enc_addEventListener,
+				$var_name,
+				$var_name, $enc_ctrlKey, $var_name, $enc_metaKey,
+				$var_name, $enc_key, $var_name, $enc_key,
+				$var_name, $enc_preventDefault
+			);
 		}
 
 		// スクリプトを出力
 		if ( ! empty( $scripts ) ) {
 			echo '<script id="mati-protection-scripts">' . implode( ' ', $scripts ) . '</script>' . "\n";
 		}
+	}
+
+	/**
+	 * Seedから再現可能な乱数生成器を作成
+	 *
+	 * @param string $seed シード文字列
+	 * @return int 初期RNG値
+	 */
+	private function create_rng_from_seed( $seed ) {
+		if ( empty( $seed ) ) {
+			$seed = 'default_seed';
+		}
+		return abs( crc32( $seed ) );
+	}
+
+	/**
+	 * ランダムな変数名を生成
+	 *
+	 * @param int $rng RNG値（参照渡し）
+	 * @return string 変数名
+	 */
+	private function generate_var_name( &$rng ) {
+		$chars  = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+		$length = 6;
+		$name   = '_0x';
+
+		for ( $i = 0; $i < $length; $i++ ) {
+			// 線形合同法で疑似乱数生成
+			$rng  = ( $rng * 1103515245 + 12345 ) % 2147483648;
+			$name .= $chars[ $rng % strlen( $chars ) ];
+		}
+
+		return $name;
+	}
+
+	/**
+	 * 文字列をランダムなエンコード方式でエンコード
+	 *
+	 * @param string $str エンコードする文字列
+	 * @param int    $rng RNG値（参照渡し）
+	 * @return string エンコードされた文字列
+	 */
+	private function encode_string( $str, &$rng ) {
+		// エンコード方式をランダム選択（0: hex, 1: unicode, 2: octal）
+		$rng    = ( $rng * 1103515245 + 12345 ) % 2147483648;
+		$method = $rng % 3;
+
+		$result = '';
+		for ( $i = 0; $i < strlen( $str ); $i++ ) {
+			$char = $str[ $i ];
+			$code = ord( $char );
+
+			switch ( $method ) {
+				case 0: // Hex
+					$result .= sprintf( '\x%02x', $code );
+					break;
+				case 1: // Unicode
+					$result .= sprintf( '\u%04x', $code );
+					break;
+				case 2: // Octal
+					$result .= sprintf( '\%03o', $code );
+					break;
+			}
+		}
+
+		return $result;
 	}
 }

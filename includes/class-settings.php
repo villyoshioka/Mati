@@ -49,7 +49,14 @@ class Mati_Settings {
 	public function get_settings() {
 		$defaults = $this->get_default_settings();
 		$settings = get_option( self::OPTION_NAME, array() );
-		return wp_parse_args( $settings, $defaults );
+		$merged   = wp_parse_args( $settings, $defaults );
+
+		// obfuscation_seedが空の場合は生成
+		if ( empty( $merged['obfuscation_seed'] ) ) {
+			$merged['obfuscation_seed'] = $this->generate_seed();
+		}
+
+		return $merged;
 	}
 
 	/**
@@ -84,18 +91,44 @@ class Mati_Settings {
 			'bing_verification'          => '',
 			'fediverse_profile_urls'     => array(),
 			'enable_jsonld'              => false,
+
+			// セキュリティ
+			'obfuscation_seed'           => '',
 		);
 	}
 
 	/**
 	 * 設定を保存
+	 *
+	 * @param array $new_settings 新しい設定値
+	 * @param array $options オプション（skip_seed_regen, skip_cp_clear）
+	 * @return bool 成功したらtrue
 	 */
-	public function save_settings( $new_settings ) {
+	public function save_settings( $new_settings, $options = array() ) {
+		// obfuscation seedを再生成（skip_seed_regenフラグがない場合）
+		if ( empty( $options['skip_seed_regen'] ) ) {
+			$new_settings['obfuscation_seed'] = $this->generate_seed();
+		}
+
 		// サニタイズ
 		$sanitized = $this->sanitize_settings( $new_settings );
 
 		// 保存
 		update_option( self::OPTION_NAME, $sanitized );
+
+		// CarryPodキャッシュクリア（skip_cp_clearフラグがない場合）
+		if ( empty( $options['skip_cp_clear'] ) && class_exists( 'CP_Cache' ) ) {
+			$cache = CP_Cache::get_instance();
+			// 無限ループ回避: CPにMatiシード再生成をスキップさせる
+			add_filter( 'cp_skip_mati_seed_regen', '__return_true', 9999 );
+
+			try {
+				$cache->clear_all();
+			} finally {
+				// 例外発生時も必ずフィルターを解除
+				remove_filter( 'cp_skip_mati_seed_regen', '__return_true', 9999 );
+			}
+		}
 
 		return true;
 	}
@@ -356,4 +389,28 @@ class Mati_Settings {
 		// ベータ用キャッシュもクリア
 		delete_transient( 'mati_github_release_cache_beta' );
 	}
+
+	/**
+	 * obfuscation seedを生成
+	 *
+	 * @return string 32文字のランダムな文字列
+	 */
+	private function generate_seed() {
+		// wp_generate_password()が利用可能な場合はそれを使用
+		if ( function_exists( 'wp_generate_password' ) ) {
+			return wp_generate_password( 32, false );
+		}
+
+		// フォールバック: PHPネイティブ関数のみ使用
+		$chars  = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+		$length = 32;
+		$seed   = '';
+
+		for ( $i = 0; $i < $length; $i++ ) {
+			$seed .= $chars[ mt_rand( 0, strlen( $chars ) - 1 ) ];
+		}
+
+		return $seed;
+	}
 }
+
