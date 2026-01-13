@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Mati
- * Version: 1.3.0
+ * Version: 1.3.1
  * Description: コンテンツ保護・メタタグ管理・SEO設定を簡単に制御できるWordPressプラグイン。
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // プラグインの定数を定義
-define( 'MATI_VERSION', '1.3.0' );
+define( 'MATI_VERSION', '1.3.1' );
 define( 'MATI_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MATI_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'MATI_PLUGIN_FILE', __FILE__ );
@@ -72,6 +72,9 @@ class Mati {
 		// プラグイン削除時のフック
 		register_uninstall_hook( MATI_PLUGIN_FILE, array( 'Mati', 'uninstall' ) );
 
+		// アップグレード処理
+		add_action( 'plugins_loaded', array( $this, 'maybe_upgrade' ) );
+
 		// GitHub自動更新を初期化
 		new Mati_Updater();
 
@@ -115,6 +118,38 @@ class Mati {
 	public static function uninstall() {
 		// 設定を完全に削除
 		delete_option( 'mati_settings' );
+		delete_option( 'mati_version' );
+	}
+
+	/**
+	 * アップグレード処理
+	 */
+	public function maybe_upgrade() {
+		$previous_version = get_option( 'mati_version', '0.0.0' );
+
+		// 1.3.1未満からのアップグレードの場合
+		if ( version_compare( $previous_version, '1.3.1', '<' ) ) {
+			$this->upgrade_to_1_3_1();
+		}
+
+		// バージョン番号を更新
+		if ( version_compare( $previous_version, MATI_VERSION, '<' ) ) {
+			update_option( 'mati_version', MATI_VERSION );
+		}
+	}
+
+	/**
+	 * v1.3.1へのアップグレード処理
+	 */
+	private function upgrade_to_1_3_1() {
+		$settings_manager = Mati_Settings::get_instance();
+		$current_settings = $settings_manager->get_settings();
+
+		// 設定が存在する場合のみseedを再生成
+		if ( ! empty( $current_settings ) ) {
+			// 既存設定を維持したままseedのみ再生成（CP連携をスキップ）
+			$settings_manager->save_settings( $current_settings, array( 'skip_cp_clear' => true ) );
+		}
 	}
 }
 
