@@ -367,9 +367,9 @@ class Mati_Frontend {
 	 * @return string エンコードされた文字列
 	 */
 	private function encode_string( $str, &$rng ) {
-		// エンコード方式をランダム選択（0: hex, 1: unicode, 2: octal）
+		// エンコード方式をランダム選択（0: hex, 1: unicode）
 		$rng    = ( $rng * 1103515245 + 12345 ) % 2147483648;
-		$method = $rng % 3;
+		$method = $rng % 2;
 
 		$result = '';
 		for ( $i = 0; $i < strlen( $str ); $i++ ) {
@@ -382,9 +382,6 @@ class Mati_Frontend {
 					break;
 				case 1: // Unicode
 					$result .= sprintf( '\u%04x', $code );
-					break;
-				case 2: // Octal
-					$result .= sprintf( '\%03o', $code );
 					break;
 			}
 		}
