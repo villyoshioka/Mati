@@ -124,6 +124,10 @@ class Mati_Frontend {
 		// robots メタタグの統合管理
 		$robots_directives = array();
 
+		if ( ! empty( $settings['add_noindex_meta'] ) ) {
+			$robots_directives[] = 'noindex';
+		}
+
 		if ( ! empty( $settings['add_noarchive_meta'] ) ) {
 			$robots_directives[] = 'noarchive';
 		}

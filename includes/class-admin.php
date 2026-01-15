@@ -49,7 +49,7 @@ class Mati_Admin {
 			'mati',
 			array( $this, 'render_settings_page' ),
 			'dashicons-shield',
-			4 // 設定の上に表示
+			79 // 設定の上に表示
 		);
 	}
 
@@ -184,7 +184,7 @@ class Mati_Admin {
 					        id="header-content-protection"
 					        aria-expanded="true"
 					        aria-controls="accordion-content-protection">
-						<span class="mati-accordion-title">コンテンツ保護</span>
+						<span class="mati-accordion-title">コンテンツ保護設定</span>
 						<span class="mati-accordion-icon" aria-hidden="true"></span>
 					</button>
 					<div id="accordion-content-protection"
@@ -305,7 +305,7 @@ class Mati_Admin {
 					        id="header-meta-removal"
 					        aria-expanded="false"
 					        aria-controls="accordion-meta-removal">
-						<span class="mati-accordion-title">不要な情報の非表示</span>
+						<span class="mati-accordion-title">サイトメタ情報の表示設定</span>
 						<span class="mati-accordion-icon" aria-hidden="true"></span>
 					</button>
 					<div id="accordion-meta-removal"
@@ -406,7 +406,7 @@ class Mati_Admin {
 					        id="header-seo"
 					        aria-expanded="false"
 					        aria-controls="accordion-seo">
-						<span class="mati-accordion-title">SEO</span>
+						<span class="mati-accordion-title">SEO設定</span>
 						<span class="mati-accordion-icon" aria-hidden="true"></span>
 					</button>
 					<div id="accordion-seo"
@@ -449,6 +449,17 @@ class Mati_Admin {
 							</label>
 						</div>
 
+						<div class="mati-form-group">
+							<label>
+								<input type="checkbox" name="add_noindex_meta" value="1" <?php checked( ! empty( $settings['add_noindex_meta'] ) ); ?>>
+								検索エンジンのインデックス登録を拒否(noindex)
+								<span class="mati-tooltip-wrapper">
+									<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+									<span class="mati-tooltip-content" role="tooltip">検索エンジンにサイトをインデックスしないよう指示します。サイト全体が検索結果に表示されなくなります。<br><strong>非常に強力な設定のため、使用時は十分注意してください。</strong></span>
+								</span>
+							</label>
+						</div>
+
 					</div>
 				</div>
 
@@ -458,7 +469,7 @@ class Mati_Admin {
 					        id="header-fediverse"
 					        aria-expanded="false"
 					        aria-controls="accordion-fediverse">
-						<span class="mati-accordion-title">Misskey/Mastodon本人認証</span>
+						<span class="mati-accordion-title">Misskey/Mastodon本人認証設定</span>
 						<span class="mati-accordion-icon" aria-hidden="true"></span>
 					</button>
 					<div id="accordion-fediverse"
@@ -525,9 +536,8 @@ class Mati_Admin {
 
 			</form>
 
-			<!-- プラグイン情報 -->
-			<div class="mati-plugin-info">
-				<p>Mati <a href="https://github.com/villyoshioka/mati/releases/tag/v<?php echo esc_attr( MATI_VERSION ); ?>" target="_blank" rel="noopener noreferrer">v<?php echo esc_html( MATI_VERSION ); ?></a></p>
+			<div class="mati-version-info">
+				Mati <a href="https://github.com/villyoshioka/mati/releases/tag/v<?php echo esc_attr( MATI_VERSION ); ?>" target="_blank" rel="noopener noreferrer">v<?php echo esc_html( MATI_VERSION ); ?></a>
 			</div>
 
 		</div>

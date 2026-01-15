@@ -651,16 +651,13 @@
 	display: inline-block;
 }
 
-/* プラグイン情報 */
-.mati-plugin-info {
-	margin-top: 20px;
-}
-
-.mati-plugin-info p {
-	margin: 0;
-	font-size: 13px;
-	color: var(--mati-color-text-secondary);
-	font-weight: 500;
+/* バージョン情報 */
+.mati-admin-wrap .mati-version-info {
+	background: transparent;
+	color: #646970;
+	font-size: 12px;
+	padding: 0;
+	margin: 10px 0 0 0;
 }
 
 /* セクション全体のスタイル */

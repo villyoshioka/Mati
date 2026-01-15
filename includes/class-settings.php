@@ -91,6 +91,7 @@ class Mati_Settings {
 			'bing_verification'          => '',
 			'fediverse_profile_urls'     => array(),
 			'enable_jsonld'              => false,
+			'add_noindex_meta'           => false,
 
 			// セキュリティ
 			'obfuscation_seed'           => '',
@@ -160,6 +161,7 @@ class Mati_Settings {
 			'add_noimageindex_meta',
 			'add_noai_meta',
 			'enable_jsonld',
+			'add_noindex_meta',
 		);
 
 		foreach ( $checkbox_keys as $key ) {
