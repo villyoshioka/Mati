@@ -43,7 +43,7 @@ class Mati_Frontend {
 
 		// コンテンツ保護のフック
 		add_action( 'wp_head', array( $this, 'add_protection_styles' ), 999 );
-		add_action( 'wp_footer', array( $this, 'add_protection_scripts' ), 999 );
+		add_action( 'wp_head', array( $this, 'add_protection_scripts' ), 999 );
 	}
 
 	/**
@@ -235,7 +235,7 @@ class Mati_Frontend {
 
 		// スタイルを出力
 		if ( ! empty( $styles ) ) {
-			echo '<style id="mati-protection-styles">' . implode( ' ', $styles ) . '</style>' . "\n";
+			echo '<style>' . implode( ' ', $styles ) . '</style>' . "\n";
 		}
 	}
 
@@ -326,7 +326,7 @@ class Mati_Frontend {
 
 		// スクリプトを出力
 		if ( ! empty( $scripts ) ) {
-			echo '<script id="mati-protection-scripts">' . implode( ' ', $scripts ) . '</script>' . "\n";
+			echo '<script>' . implode( ' ', $scripts ) . '</script>' . "\n";
 		}
 	}
 
