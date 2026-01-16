@@ -279,29 +279,28 @@ class Mati_Frontend {
 			$enc_key             = $this->encode_string( 'key', $rng );
 			$enc_keyCode         = $this->encode_string( 'keyCode', $rng );
 			$enc_preventDefault  = $this->encode_string( 'preventDefault', $rng );
-			$enc_stopPropagation = $this->encode_string( 'stopPropagation', $rng );
 			$enc_ctrlKey         = $this->encode_string( 'ctrlKey', $rng );
 			$enc_shiftKey        = $this->encode_string( 'shiftKey', $rng );
 			$enc_metaKey         = $this->encode_string( 'metaKey', $rng );
 			$enc_altKey          = $this->encode_string( 'altKey', $rng );
 
 			$scripts[] = sprintf(
-				'!function(){var %s=window["%s"]["%s"];if(%s["%s"]("."+"local")||%s==="localhost"||%s==="127.0.0.1")return;var %s=/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i["%s"](navigator["%s"])||"ontouchstart"in window||navigator["maxTouchPoints"]>0;document["%s"]("key"+"down",function(%s){if(%s["%s"]==="F"+"12"||%s["%s"]===123){%s["%s"]();%s["%s"]();return!1}if(/^[IiJjCc]$/["%s"](%s["%s"])){if(%s["%s"]&&%s["%s"]){%s["%s"]();%s["%s"]();return!1}if(%s["%s"]&&%s["%s"]){%s["%s"]();%s["%s"]();return!1}}if(/^[Uu]$/["%s"](%s["%s"])){if(%s["%s"]&&!%s["%s"]&&!%s["%s"]){%s["%s"]();%s["%s"]();return!1}if(%s["%s"]&&!%s["%s"]&&!%s["%s"]){%s["%s"]();%s["%s"]();return!1}}},!0)}();',
+				'!function(){var %s=window["%s"]["%s"];if(%s["%s"]("."+"local")||%s==="localhost"||%s==="127.0.0.1")return;var %s=/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i["%s"](navigator["%s"])||"ontouchstart"in window||navigator["maxTouchPoints"]>0;document["%s"]("key"+"down",function(%s){if(%s["%s"]==="F"+"12"||%s["%s"]===123){%s["%s"]();return!1}if(/^[IiJjCc]$/["%s"](%s["%s"])){if(%s["%s"]&&%s["%s"]){%s["%s"]();return!1}if(%s["%s"]&&%s["%s"]){%s["%s"]();return!1}}if(/^[Uu]$/["%s"](%s["%s"])){if(%s["%s"]&&!%s["%s"]&&!%s["%s"]){%s["%s"]();return!1}if(%s["%s"]&&!%s["%s"]&&!%s["%s"]){%s["%s"]();return!1}}})}();',
 				$var1, $enc_location, $enc_hostname, $var1, $enc_endsWith, $var1, $var1,
 				$var2, $enc_test, $enc_userAgent,
 				$enc_addEventListener, $var3,
 				$var3, $enc_key, $var3, $enc_keyCode,
-				$var3, $enc_preventDefault, $var3, $enc_stopPropagation,
+				$var3, $enc_preventDefault,
 				$enc_test, $var3, $enc_key,
 				$var3, $enc_ctrlKey, $var3, $enc_shiftKey,
-				$var3, $enc_preventDefault, $var3, $enc_stopPropagation,
+				$var3, $enc_preventDefault,
 				$var3, $enc_metaKey, $var3, $enc_altKey,
-				$var3, $enc_preventDefault, $var3, $enc_stopPropagation,
+				$var3, $enc_preventDefault,
 				$enc_test, $var3, $enc_key,
 				$var3, $enc_ctrlKey, $var3, $enc_shiftKey, $var3, $enc_altKey,
-				$var3, $enc_preventDefault, $var3, $enc_stopPropagation,
+				$var3, $enc_preventDefault,
 				$var3, $enc_metaKey, $var3, $enc_shiftKey, $var3, $enc_altKey,
-				$var3, $enc_preventDefault, $var3, $enc_stopPropagation
+				$var3, $enc_preventDefault
 			);
 		}
 

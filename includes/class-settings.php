@@ -21,7 +21,6 @@ class Mati_Settings {
 
 	/**
 	 * ベータモードパスワードハッシュ（SHA-256）
-	 * パスワード: Mati_test9999
 	 * セキュリティ: ハッシュ値のみを保存し、平文パスワードはソースコードに含めない
 	 */
 	private $beta_password_hash = '15b85ad5e5d01a928251f71e447b682aa06c026295e2c1f89287d0c4837ec6f3';
