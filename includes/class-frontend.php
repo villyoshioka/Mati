@@ -41,9 +41,9 @@ class Mati_Frontend {
 		// SEOメタタグ追加のフック
 		add_action( 'wp_head', array( $this, 'add_seo_meta_tags' ), 1 );
 
-		// コンテンツ保護のフック
-		add_action( 'wp_head', array( $this, 'add_protection_styles' ), 999 );
-		add_action( 'wp_head', array( $this, 'add_protection_scripts' ), 999 );
+		// コンテンツ保護のフック（優先度1で最優先実行）
+		add_action( 'wp_head', array( $this, 'add_protection_styles' ), 1 );
+		add_action( 'wp_head', array( $this, 'add_protection_scripts' ), 1 );
 	}
 
 	/**
