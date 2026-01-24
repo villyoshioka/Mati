@@ -323,9 +323,9 @@ class Mati_Frontend {
 			);
 		}
 
-		// スクリプトを出力
+		// スクリプトを出力（Cloudflare Rocket Loader除外）
 		if ( ! empty( $scripts ) ) {
-			echo '<script>' . implode( ' ', $scripts ) . '</script>' . "\n";
+			echo '<script data-cfasync="false">' . implode( ' ', $scripts ) . '</script>' . "\n";
 		}
 	}
 
