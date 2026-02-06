@@ -444,7 +444,7 @@ class Mati_Admin {
 								JSON-LD構造化データを出力
 								<span class="mati-tooltip-wrapper">
 									<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
-									<span class="mati-tooltip-content" role="tooltip">WebSite、Organization、BreadcrumbListの構造化データを自動生成してSEOを改善します。</span>
+									<span class="mati-tooltip-content" role="tooltip">WebSite、Organization、パンくずリストの構造化データを自動生成してSEOを改善します。<br>CarryPodで静的化する場合、URLは自動的に静的サイトのURLに変換されます。</span>
 								</span>
 							</label>
 						</div>

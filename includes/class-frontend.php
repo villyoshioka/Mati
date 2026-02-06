@@ -41,6 +41,9 @@ class Mati_Frontend {
 		// SEOメタタグ追加のフック
 		add_action( 'wp_head', array( $this, 'add_seo_meta_tags' ), 1 );
 
+		// レスポンスヘッダー追加のフック
+		add_filter( 'wp_headers', array( $this, 'add_security_headers' ), 10 );
+
 		// コンテンツ保護のフック（優先度1で最優先実行）
 		add_action( 'wp_head', array( $this, 'add_protection_styles' ), 1 );
 		add_action( 'wp_head', array( $this, 'add_protection_scripts' ), 1 );
@@ -93,6 +96,55 @@ class Mati_Frontend {
 		if ( isset( $headers['X-Pingback'] ) ) {
 			unset( $headers['X-Pingback'] );
 		}
+		return $headers;
+	}
+
+	/**
+	 * セキュリティヘッダーを追加
+	 */
+	public function add_security_headers( $headers ) {
+		$settings = $this->settings_manager->get_settings();
+
+		// X-Robots-Tag ヘッダーの追加
+		$robots_directives = array();
+
+		if ( ! empty( $settings['add_noindex_meta'] ) ) {
+			$robots_directives[] = 'noindex';
+		}
+
+		if ( ! empty( $settings['add_noarchive_meta'] ) ) {
+			$robots_directives[] = 'noarchive';
+		}
+
+		if ( ! empty( $settings['add_noimageindex_meta'] ) ) {
+			$robots_directives[] = 'noimageindex';
+		}
+
+		if ( ! empty( $settings['add_noai_meta'] ) ) {
+			$robots_directives[] = 'noai';
+			$robots_directives[] = 'noimageai';
+		}
+
+		if ( ! empty( $robots_directives ) ) {
+			$headers['X-Robots-Tag'] = implode( ', ', $robots_directives );
+		}
+
+		// Content-Security-Policy: frame-ancestors 'self' を追加
+		if ( isset( $headers['Content-Security-Policy'] ) ) {
+			// 既存のCSPヘッダーがある場合
+			$csp = $headers['Content-Security-Policy'];
+			// frame-ancestorsが既に含まれていない場合のみ追加
+			if ( stripos( $csp, 'frame-ancestors' ) === false ) {
+				$headers['Content-Security-Policy'] = $csp . "; frame-ancestors 'self'";
+			}
+		} else {
+			// CSPヘッダーがない場合は新規作成
+			$headers['Content-Security-Policy'] = "frame-ancestors 'self'";
+		}
+
+		// X-Content-Type-Options: nosniff を追加
+		$headers['X-Content-Type-Options'] = 'nosniff';
+
 		return $headers;
 	}
 
@@ -158,11 +210,14 @@ class Mati_Frontend {
 		$site_name = get_bloginfo( 'name' );
 		$site_url  = home_url( '/' );
 
+		// CarryPod連携: 静的化URL変換
+		$static_site_url = $this->get_static_url( $site_url );
+
 		// WebSite構造化データ
 		$website_data = array(
 			'@context' => 'https://schema.org',
 			'@type'    => 'WebSite',
-			'url'      => esc_url( $site_url ),
+			'url'      => esc_url( $static_site_url ),
 			'name'     => esc_html( $site_name ),
 		);
 
@@ -173,7 +228,7 @@ class Mati_Frontend {
 			$organization_data = array(
 				'@context' => 'https://schema.org',
 				'@type'    => 'Organization',
-				'url'      => esc_url( $site_url ),
+				'url'      => esc_url( $static_site_url ),
 				'name'     => esc_html( $site_name ),
 			);
 
@@ -187,17 +242,20 @@ class Mati_Frontend {
 					'@type'    => 'ListItem',
 					'position' => 1,
 					'name'     => 'ホーム',
-					'item'     => esc_url( $site_url ),
+					'item'     => esc_url( $static_site_url ),
 				),
 			);
 
 			$post = get_post();
 			if ( $post ) {
+				$post_url        = get_permalink( $post );
+				$static_post_url = $this->get_static_url( $post_url );
+
 				$breadcrumb_items[] = array(
 					'@type'    => 'ListItem',
 					'position' => 2,
 					'name'     => esc_html( get_the_title( $post ) ),
-					'item'     => esc_url( get_permalink( $post ) ),
+					'item'     => esc_url( $static_post_url ),
 				);
 			}
 
@@ -209,6 +267,34 @@ class Mati_Frontend {
 
 			echo '<script type="application/ld+json">' . wp_json_encode( $breadcrumb_data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . '</script>' . "\n";
 		}
+	}
+
+	/**
+	 * 静的化URL変換（CarryPod連携）
+	 *
+	 * @param string $url 変換元のURL
+	 * @return string 変換後のURL（CarryPodが無効または設定がない場合は元のURLを返す）
+	 */
+	private function get_static_url( $url ) {
+		// CarryPodが有効かチェック
+		if ( ! class_exists( 'CP_Settings' ) ) {
+			return $url;
+		}
+
+		$cp_settings = CP_Settings::get_instance();
+		$cp_config   = $cp_settings->get_settings();
+		$base_url    = isset( $cp_config['base_url'] ) ? $cp_config['base_url'] : '';
+
+		// base_urlが設定されていない場合は変換しない
+		if ( empty( $base_url ) ) {
+			return $url;
+		}
+
+		// 動的サイトのURLを静的サイトのURLに置換
+		$home_url  = home_url( '/' );
+		$static_url = str_replace( $home_url, trailingslashit( $base_url ), $url );
+
+		return $static_url;
 	}
 
 	/**

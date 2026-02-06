@@ -1,5 +1,26 @@
 # リリースノート
 
+## 1.5.0 - 2026-02-06
+
+### 新機能
+
+- **HTTPセキュリティヘッダーの追加**: セキュリティ強化のため、以下のヘッダーを自動出力するようになりました。
+  - `Content-Security-Policy: frame-ancestors 'self'` - iframe埋め込み制限
+  - `X-Content-Type-Options: nosniff` - MIMEタイプスニッフィング防止
+  - `X-Robots-Tag` - robots設定（noindex、noarchive、noimageindex、noai）をHTTPヘッダーでも出力
+
+- **JSON-LD構造化データの静的化対応**: CarryPodで静的化する際、JSON-LD構造化データ（WebSite、Organization、BreadcrumbList）のURLが自動的に静的サイトのURLに変換されるようになりました。
+
+### 改善
+
+- **UI改善**: JSON-LD構造化データ出力の説明文を改善しました。
+
+### 注意事項
+
+- このバージョンから `Content-Security-Policy: frame-ancestors 'self'` が全ページで自動適用されます。iframe埋め込みを許可している場合はご注意ください。
+
+---
+
 ## 1.4.4 - 2026-01-24
 
 ### バグ修正
