@@ -210,7 +210,7 @@ class Mati_Admin {
 									右クリック禁止
 									<span class="mati-tooltip-wrapper">
 										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
-										<span class="mati-tooltip-content" role="tooltip">マウスの右クリックメニューを無効化します。画像やテキストのコピーを抑止できます。</span>
+										<span class="mati-tooltip-content" role="tooltip">マウスの右クリックメニューを無効化します。<br>画像やテキストのコピーを抑止できます。</span>
 									</span>
 								</label>
 							</div>
@@ -260,7 +260,7 @@ class Mati_Admin {
 									印刷禁止
 									<span class="mati-tooltip-wrapper">
 										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
-										<span class="mati-tooltip-content" role="tooltip">ページの印刷機能を無効化します。印刷時にコンテンツが表示されなくなります。</span>
+										<span class="mati-tooltip-content" role="tooltip">ページの印刷機能を無効化します。<br>印刷時にコンテンツが表示されなくなります。</span>
 									</span>
 								</label>
 							</div>
@@ -280,7 +280,7 @@ class Mati_Admin {
 									画像の検索インデックス登録を拒否（noimageindex）
 									<span class="mati-tooltip-wrapper">
 										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
-										<span class="mati-tooltip-content" role="tooltip">検索エンジンに画像をインデックスしないよう指示します。画像検索結果に表示されなくなります。</span>
+										<span class="mati-tooltip-content" role="tooltip">検索エンジンに画像をインデックスしないよう指示します。<br>画像検索結果に表示されなくなります。</span>
 									</span>
 								</label>
 							</div>
@@ -331,7 +331,7 @@ class Mati_Admin {
 									WordPressバージョン情報の非表示
 									<span class="mati-tooltip-wrapper">
 										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
-										<span class="mati-tooltip-content" role="tooltip">WordPressのバージョン情報を非表示にします。セキュリティ向上に役立ちます。静的化する場合も事前に非表示にしておくことを推奨します。</span>
+										<span class="mati-tooltip-content" role="tooltip">WordPressのバージョン情報を非表示にします。<br>セキュリティ向上に役立ちます。静的化する場合も事前に非表示にしておくことを推奨します。</span>
 									</span>
 								</label>
 							</div>
@@ -341,7 +341,7 @@ class Mati_Admin {
 									REST API (wp-json) リンクの非表示
 									<span class="mati-tooltip-wrapper">
 										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
-										<span class="mati-tooltip-content" role="tooltip">REST APIディスカバリーリンク（&lt;link rel="https://api.w.org/"&gt;）を非表示にします。静的化する場合は非表示にすることを推奨します。</span>
+										<span class="mati-tooltip-content" role="tooltip">REST APIディスカバリーリンク（&lt;link rel="https://api.w.org/"&gt;）を非表示にします。<br>静的化する場合は非表示にすることを推奨します。</span>
 									</span>
 								</label>
 							</div>
@@ -351,7 +351,7 @@ class Mati_Admin {
 									oEmbedリンクの非表示
 									<span class="mati-tooltip-wrapper">
 										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
-										<span class="mati-tooltip-content" role="tooltip">oEmbed関連のリンクを非表示にします。外部サービスの埋め込みを使わない場合や静的化する場合は非表示にすることを推奨します。</span>
+										<span class="mati-tooltip-content" role="tooltip">oEmbed関連のリンクを非表示にします。<br>外部サービスの埋め込みを使わない場合や静的化する場合は非表示にすることを推奨します。</span>
 									</span>
 								</label>
 							</div>
@@ -361,7 +361,7 @@ class Mati_Admin {
 									RSDリンクの非表示
 									<span class="mati-tooltip-wrapper">
 										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
-										<span class="mati-tooltip-content" role="tooltip">外部ブログエディタ用のRSDリンクを非表示にします。通常は不要で、静的化する場合も非表示にすることを推奨します。</span>
+										<span class="mati-tooltip-content" role="tooltip">外部ブログエディタ用のRSDリンクを非表示にします。<br>通常は不要で、静的化する場合も非表示にすることを推奨します。</span>
 									</span>
 								</label>
 							</div>
@@ -371,7 +371,7 @@ class Mati_Admin {
 									wlwmanifestリンクの非表示
 									<span class="mati-tooltip-wrapper">
 										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
-										<span class="mati-tooltip-content" role="tooltip">Windows Live Writer用のリンクを非表示にします。Windows Live Writerはサポート終了済みのため、非表示にすることを推奨します。静的化する場合も不要です。</span>
+										<span class="mati-tooltip-content" role="tooltip">Windows Live Writer用のリンクを非表示にします。<br>サポート終了済みのため、非表示にすることを推奨します。静的化する場合も不要です。</span>
 									</span>
 								</label>
 							</div>
@@ -381,7 +381,7 @@ class Mati_Admin {
 									shortlinkの非表示
 									<span class="mati-tooltip-wrapper">
 										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
-										<span class="mati-tooltip-content" role="tooltip">短縮URLへのリンクを非表示にします。短縮URLを使用していない場合や静的化する場合は非表示にすることを推奨します。</span>
+										<span class="mati-tooltip-content" role="tooltip">短縮URLへのリンクを非表示にします。<br>短縮URLを使用していない場合や静的化する場合は非表示にすることを推奨します。</span>
 									</span>
 								</label>
 							</div>
@@ -391,7 +391,7 @@ class Mati_Admin {
 									pingbackの無効化
 									<span class="mati-tooltip-wrapper">
 										<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
-										<span class="mati-tooltip-content" role="tooltip">ピンバック機能を無効化します。スパムコメント対策に効果的で、静的化する場合は不要な機能です。</span>
+										<span class="mati-tooltip-content" role="tooltip">ピンバック機能を無効化します。<br>スパムコメント対策に効果的で、静的化する場合は不要な機能です。</span>
 									</span>
 								</label>
 							</div>
@@ -455,7 +455,7 @@ class Mati_Admin {
 								検索エンジンのインデックス登録を拒否(noindex)
 								<span class="mati-tooltip-wrapper">
 									<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
-									<span class="mati-tooltip-content" role="tooltip">検索エンジンにサイトをインデックスしないよう指示します。サイト全体が検索結果に表示されなくなります。<br><strong>非常に強力な設定のため、使用時は十分注意してください。</strong></span>
+									<span class="mati-tooltip-content" role="tooltip">検索エンジンにサイトをインデックスしないよう指示します。<br>サイト全体が検索結果に表示されなくなります。<br><strong>非常に強力な設定のため、使用時は十分注意してください。</strong></span>
 								</span>
 							</label>
 						</div>
@@ -484,7 +484,7 @@ class Mati_Admin {
 								プロフィール URL
 								<span class="mati-tooltip-wrapper">
 									<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
-									<span class="mati-tooltip-content" role="tooltip">Misskey・Mastodonで本人確認マーク（緑のチェック✓）を付けるためのプロフィールURL（最大5個）。このサイトとプロフィールを紐付けることで、サイト所有者であることを証明し、なりすましを防止できます</span>
+									<span class="mati-tooltip-content" role="tooltip">Misskey・Mastodonで本人確認マーク（緑のチェック✓）を付けるためのプロフィールURL（最大5個）。<br>このサイトとプロフィールを紐付けることで、サイト所有者であることを証明し、なりすましを防止できます</span>
 								</span>
 							</label>
 							<div id="mati-fediverse-urls-container">
