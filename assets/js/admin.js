@@ -229,7 +229,7 @@
 				const $checkbox = $(this);
 				formData[$checkbox.attr('name')] = $checkbox.prop('checked') ? '1' : '';
 			});
-			$form.find('input[type="text"], input[type="url"]').each(function() {
+			$form.find('input[type="text"], input[type="url"], input[type="hidden"]').each(function() {
 				const $input = $(this);
 				const name = $input.attr('name');
 
@@ -244,6 +244,13 @@
 				} else {
 					// 通常のフィールド
 					formData[name] = $input.val();
+				}
+			});
+			$form.find("textarea").each(function() {
+				const $textarea = $(this);
+				const name = $textarea.attr("name");
+				if (name) {
+					formData[name] = $textarea.val();
 				}
 			});
 
@@ -486,8 +493,8 @@
 			updateRemoveButtons();
 		});
 
-		// URL を削除
-		$(document).on('click', '.mati-remove-url', function() {
+		// URL を削除（Bluesky削除ボタンは除外）
+		$(document).on('click', '.mati-remove-url:not(.mati-clear-bluesky)', function() {
 			$(this).closest('.mati-fediverse-url-row').remove();
 			updateRemoveButtons();
 		});
@@ -515,6 +522,17 @@
 
 		// 初期表示時に削除ボタンの表示を更新
 		updateRemoveButtons();
+
+		// Bluesky 設定をクリア
+		$(document).on("click", ".mati-clear-bluesky", function() {
+			const $row = $(this).closest(".mati-fediverse-url-row");
+			const $input = $row.find("input[name='bluesky_profile_url']");
+			$input.val("");
+			$input.attr("placeholder", "例: https://bsky.app/profile/username.bsky.social");
+			$input.after('<input type="hidden" name="bluesky_clear" value="1">');
+			$(this).hide();
+			hasUnsavedChanges = true;
+		});
 
 		// ========================================
 		// ツールチップ機能

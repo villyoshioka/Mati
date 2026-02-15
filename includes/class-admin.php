@@ -469,7 +469,7 @@ class Mati_Admin {
 					        id="header-fediverse"
 					        aria-expanded="false"
 					        aria-controls="accordion-fediverse">
-						<span class="mati-accordion-title">Misskey/Mastodon本人認証設定</span>
+						<span class="mati-accordion-title">SNS本人認証設定</span>
 						<span class="mati-accordion-icon" aria-hidden="true"></span>
 					</button>
 					<div id="accordion-fediverse"
@@ -481,10 +481,10 @@ class Mati_Admin {
 
 						<div class="mati-form-group">
 							<label>
-								プロフィール URL
+								Mastodon/Misskey プロフィール URL
 								<span class="mati-tooltip-wrapper">
 									<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
-									<span class="mati-tooltip-content" role="tooltip">Misskey・Mastodonで本人確認マーク（緑のチェック✓）を付けるためのプロフィールURL（最大5個）。<br>このサイトとプロフィールを紐付けることで、サイト所有者であることを証明し、なりすましを防止できます</span>
+									<span class="mati-tooltip-content" role="tooltip">Misskey・Mastodonで本人確認マーク（緑のチェック✓）を付けるためのプロフィールURLを入力してください（最大5個）。<br>このサイトとプロフィールを紐付けることで、サイト所有者であることを証明し、なりすましを防止できます</span>
 								</span>
 							</label>
 							<div id="mati-fediverse-urls-container">
@@ -511,6 +511,54 @@ class Mati_Admin {
 								?>
 							</div>
 							<button type="button" class="button button-primary" id="mati-add-fediverse-url" style="margin-top: 10px;">URL を追加</button>
+						</div>
+
+						<div class="mati-form-group">
+							<label>
+								Bluesky プロフィール URL
+								<span class="mati-tooltip-wrapper">
+									<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+									<span class="mati-tooltip-content" role="tooltip">Blueskyのハンドル名にサイトのドメインを使用するための、ドメイン変更前のプロフィールURLを入力してください。サイト所有者であることが証明され、なりすましを防止できます。<br><br><strong>手順:</strong><br>1. ここにBlueskyプロフィールURLを入力して保存<br>2. 静的サイトの場合はCarryPodで静的化して公開<br>3. Blueskyアプリで 設定 → アカウント → ハンドルを変更 → 「自分のドメインを持っています」を選択<br>4. 「DNSパネルがない場合」に切り替え → サイトのドメインを入力 → 「テキストファイルを確認」で認証</span>
+								</span>
+							</label>
+							<?php
+							$has_bluesky = ! empty( $settings['bluesky_did'] );
+							$bluesky_placeholder = $has_bluesky ? '設定済み（変更する場合は新しいURLを入力）' : '例: https://bsky.app/profile/username.bsky.social';
+							?>
+							<div class="mati-fediverse-url-row">
+								<input type="url" name="bluesky_profile_url" class="regular-text" value="" placeholder="<?php echo esc_attr( $bluesky_placeholder ); ?>">
+								<button type="button" class="mati-remove-url mati-clear-bluesky"<?php echo $has_bluesky ? '' : ' style="display: none;"'; ?>>削除</button>
+							</div>
+						</div>
+
+					</div>
+				</div>
+
+				<!-- その他の設定アコーディオン -->
+				<div class="mati-accordion-section" data-section="other-settings">
+					<button type="button" class="mati-accordion-header"
+					        id="header-other-settings"
+					        aria-expanded="false"
+					        aria-controls="accordion-other-settings">
+						<span class="mati-accordion-title">その他の設定</span>
+						<span class="mati-accordion-icon" aria-hidden="true"></span>
+					</button>
+					<div id="accordion-other-settings"
+					     class="mati-accordion-content"
+					     role="region"
+					     aria-labelledby="header-other-settings"
+					     aria-hidden="true"
+					     style="display: none;">
+
+						<div class="mati-form-group">
+							<label>
+								iframe埋め込み許可ドメイン
+								<span class="mati-tooltip-wrapper">
+									<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+									<span class="mati-tooltip-content" role="tooltip">このサイトをiframeで埋め込むことを許可する外部ドメインを指定します（1行に1ドメイン、https://のみ）。<br>自サイトは常に許可されています。許可ドメインを増やすほどセキュリティが低下するため、必要最小限に留めてください</span>
+								</span>
+							</label>
+							<textarea name="frame_ancestors_domains" class="large-text" rows="4" placeholder="例: https://example.com"><?php echo esc_textarea( $settings['frame_ancestors_domains'] ?? '' ); ?></textarea>
 						</div>
 
 					</div>
@@ -561,13 +609,99 @@ class Mati_Admin {
 		// 設定を保存
 		$settings_manager = Mati_Settings::get_instance();
 		$new_settings     = $_POST['settings'] ?? array(); // サニタイズはsave_settings内で実施
-		$result           = $settings_manager->save_settings( $new_settings );
+
+		// Bluesky DID解決
+		$bluesky_clear = ! empty( $new_settings['bluesky_clear'] );
+		$bluesky_url   = isset( $new_settings['bluesky_profile_url'] ) ? sanitize_text_field( $new_settings['bluesky_profile_url'] ) : '';
+		unset( $new_settings['bluesky_clear'] );
+
+		if ( $bluesky_clear ) {
+			// 削除ボタンが押された場合: クリア
+			$new_settings['bluesky_profile_url'] = '';
+			$new_settings['bluesky_did']         = '';
+		} elseif ( ! empty( $bluesky_url ) ) {
+			// 新しいURLが入力された場合: DIDを解決
+			$bluesky_did = $this->resolve_bluesky_did( $bluesky_url );
+			if ( is_wp_error( $bluesky_did ) ) {
+				wp_send_json_error( array( 'message' => 'Blueskyアカウントの設定に失敗しました。URLを確認してください。' ) );
+				return;
+			}
+			$new_settings['bluesky_did'] = $bluesky_did;
+		} else {
+			// 空の場合: 既存の設定を維持（UIではURLを非表示にしているため）
+			$current_settings = $settings_manager->get_settings();
+			$new_settings['bluesky_profile_url'] = $current_settings['bluesky_profile_url'] ?? '';
+			$new_settings['bluesky_did']         = $current_settings['bluesky_did'] ?? '';
+		}
+
+		$result = $settings_manager->save_settings( $new_settings );
 
 		if ( $result ) {
 			wp_send_json_success( array( 'message' => '設定を保存しました。' ) );
 		} else {
 			wp_send_json_error( array( 'message' => '設定の保存に失敗しました。' ) );
 		}
+	}
+
+	/**
+	 * Bluesky プロフィールURLからDIDを解決
+	 *
+	 * @param string $profile_url BlueskyプロフィールURL
+	 * @return string|WP_Error DID文字列、または失敗時WP_Error
+	 */
+	private function resolve_bluesky_did( $profile_url ) {
+		// macOSスマートクォートを除去
+		$profile_url = str_replace(
+			array( "\xe2\x80\x98", "\xe2\x80\x99", "\xe2\x80\x9c", "\xe2\x80\x9d" ),
+			'',
+			$profile_url
+		);
+		$profile_url = trim( $profile_url );
+
+		// URLからハンドルを抽出
+		$parsed = wp_parse_url( $profile_url );
+		if ( ! $parsed || empty( $parsed['path'] ) ) {
+			return new WP_Error( 'invalid_url', 'URLの形式が正しくありません。' );
+		}
+
+		$path = trim( $parsed['path'], '/' );
+		if ( preg_match( '#^profile/(.+)$#', $path, $matches ) ) {
+			$handle = $matches[1];
+		} else {
+			return new WP_Error( 'invalid_url', 'BlueskyプロフィールURLの形式が正しくありません。' );
+		}
+
+		$handle = sanitize_text_field( $handle );
+		if ( empty( $handle ) ) {
+			return new WP_Error( 'invalid_handle', 'ハンドルが取得できません。' );
+		}
+
+		// Bluesky APIでDIDを解決
+		$api_url  = 'https://bsky.social/xrpc/com.atproto.identity.resolveHandle?handle=' . urlencode( $handle );
+		$response = wp_remote_get( $api_url, array(
+			'timeout' => 10,
+			'headers' => array(
+				'Accept' => 'application/json',
+			),
+		) );
+
+		if ( is_wp_error( $response ) ) {
+			return new WP_Error( 'api_error', 'Bluesky APIへの接続に失敗しました。' );
+		}
+
+		$status_code = wp_remote_retrieve_response_code( $response );
+		if ( $status_code !== 200 ) {
+			return new WP_Error( 'api_error', 'Bluesky APIからエラーが返されました。' );
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+		$data = json_decode( $body, true );
+
+		if ( ! $data || empty( $data['did'] ) ) {
+			return new WP_Error( 'no_did', 'DIDが取得できませんでした。' );
+		}
+
+		return sanitize_text_field( $data['did'] );
 	}
 
 	/**

@@ -89,8 +89,13 @@ class Mati_Settings {
 			'google_verification'        => '',
 			'bing_verification'          => '',
 			'fediverse_profile_urls'     => array(),
+			'bluesky_profile_url'        => '',
+			'bluesky_did'                => '',
 			'enable_jsonld'              => false,
 			'add_noindex_meta'           => false,
+
+			// その他
+			'frame_ancestors_domains'    => '',
 
 			// セキュリティ
 			'obfuscation_seed'           => '',
@@ -175,6 +180,15 @@ class Mati_Settings {
 		// Fediverse プロフィールURL（HTTPS必須、配列形式）
 		$sanitized['fediverse_profile_urls'] = $this->sanitize_profile_urls( $settings['fediverse_profile_urls'] ?? array() );
 
+		// Bluesky プロフィールURL（HTTPS必須）
+		$sanitized['bluesky_profile_url'] = $this->sanitize_profile_url( $settings['bluesky_profile_url'] ?? '' );
+
+		// Bluesky DID
+		$sanitized['bluesky_did'] = $this->sanitize_bluesky_did( $settings['bluesky_did'] ?? '' );
+
+		// frame-ancestors 許可ドメイン
+		$sanitized['frame_ancestors_domains'] = $this->sanitize_frame_ancestors_domains( $settings['frame_ancestors_domains'] ?? '' );
+
 		return $sanitized;
 	}
 
@@ -246,6 +260,86 @@ class Mati_Settings {
 		}
 
 		return $sanitized;
+	}
+
+	/**
+	 * Bluesky DIDをサニタイズ
+	 *
+	 * @param string $did DID文字列
+	 * @return string サニタイズされたDID
+	 */
+	private function sanitize_bluesky_did( $did ) {
+		if ( empty( $did ) ) {
+			return '';
+		}
+
+		$did = sanitize_text_field( $did );
+
+		// did:plc: or did:web: で始まることを確認
+		if ( ! preg_match( '/^did:(plc|web):[a-zA-Z0-9._:%-]+$/', $did ) ) {
+			return '';
+		}
+
+		return $did;
+	}
+
+	/**
+	 * frame-ancestors許可ドメインをサニタイズ
+	 *
+	 * @param string $domains 改行区切りのドメインリスト
+	 * @return string サニタイズされたドメインリスト（改行区切り）
+	 */
+	private function sanitize_frame_ancestors_domains( $domains ) {
+		if ( empty( $domains ) ) {
+			return '';
+		}
+
+		$lines           = explode( "\n", $domains );
+		$sanitized_lines = array();
+
+		foreach ( $lines as $line ) {
+			$line = trim( $line );
+			if ( empty( $line ) ) {
+				continue;
+			}
+
+			// macOSスマートクォートを除去
+			$line = str_replace(
+				array( "\xe2\x80\x98", "\xe2\x80\x99", "\xe2\x80\x9c", "\xe2\x80\x9d" ),
+				'',
+				$line
+			);
+			$line = trim( $line );
+			if ( empty( $line ) ) {
+				continue;
+			}
+
+			// http:// を https:// に自動補正
+			if ( strpos( $line, 'http://' ) === 0 ) {
+				$line = 'https://' . substr( $line, 7 );
+			}
+
+			// HTTPS URLのみ許可
+			$line = esc_url_raw( $line, array( 'https' ) );
+			if ( strpos( $line, 'https://' ) !== 0 ) {
+				continue;
+			}
+
+			// originのみ抽出（パス除去）
+			$parsed = wp_parse_url( $line );
+			if ( $parsed && isset( $parsed['host'] ) ) {
+				$origin = 'https://' . $parsed['host'];
+				if ( ! empty( $parsed['port'] ) ) {
+					$origin .= ':' . intval( $parsed['port'] );
+				}
+				$sanitized_lines[] = $origin;
+			}
+		}
+
+		// 重複除去
+		$sanitized_lines = array_unique( $sanitized_lines );
+
+		return implode( "\n", $sanitized_lines );
 	}
 
 	/**

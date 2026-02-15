@@ -5,7 +5,7 @@
 [![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-blue.svg)](https://www.php.net/)
-[![Version](https://img.shields.io/badge/Version-1.6.0-green.svg)](https://github.com/villyoshioka/mati/releases)
+[![Version](https://img.shields.io/badge/Version-1.7.0-green.svg)](https://github.com/villyoshioka/mati/releases)
 
 > **注意**: **このプラグインについて、コードは公開していますが、サポートは行っていません。**
 
@@ -20,11 +20,11 @@ WordPressサイトを守るための軽量プラグインです。ギリシャ�
 - 不要な情報の非表示（WordPressバージョン、oEmbed、RSD、wlwmanifest、shortlink、pingback）
 - コンテンツ保護（右クリック禁止、デベロッパーツール系キー無効化、テキスト選択禁止、画像ドラッグ禁止、印刷禁止、検索エンジンキャッシュ拒否、AI学習防止メタタグ）
 - SEO（Google Search Console、Bing Webmaster Tools認証メタタグ、JSON-LD構造化データ）
-- Fediverse本人確認（Misskey・Mastodon）
+- SNS本人認証（Misskey・Mastodon・Bluesky）
 
 ### Carry Podとの連携
 
-このプラグインは、静的化プラグイン「Carry Pod」と併用することで効果を最大化します。Matiで設定した内容は、Carry Podによる静的化時に自動的に含まれます。
+このプラグインは、静的化プラグイン「[Carry Pod](https://github.com/villyoshioka/CarryPod)」と併用することで効果を最大化します。Matiで設定した内容は、Carry Podによる静的化時に自動的に含まれます。
 
 ---
 
@@ -44,7 +44,8 @@ WordPressサイトを守るための軽量プラグインです。ギリシャ�
 1. **不要な情報の非表示**: WordPressバージョン情報など、セキュリティリスクとなる情報を非表示にできます
 2. **コンテンツ保護**: 右クリック禁止やテキスト選択禁止など、コンテンツのコピーを抑止する機能を有効化できます
 3. **SEO**: Google Search Console、Bing Webmaster Toolsの認証メタタグを簡単に設定できます
-4. **Misskey/Mastodonの本人確認**: MisskeyやMastodonで本人確認マーク（緑のチェック✓）を取得できます
+4. **SNS本人認証**: Misskey/Mastodonの本人確認マーク（緑のチェック✓）の取得や、Blueskyのドメイン認証に対応しています
+5. **iframe埋め込み許可ドメイン**: 外部サイトからのiframe埋め込みを許可するドメインを設定できます
 
 ### 一括設定と個別設定の切り替え
 
@@ -56,11 +57,20 @@ WordPressサイトを守るための軽量プラグインです。ギリシャ�
 
 ### Misskey/Mastodonの本人確認の設定方法
 
-1. SEOセクション内の「Misskey/Mastodon本人認証」を展開
+1. 「SNS本人認証設定」を展開
 2. MisskeyまたはMastodonのプロフィールURLを入力（例: https://misskey.io/@username）
 3. 最大5個まで追加可能
 4. 設定を保存後、Fediverse側のプロフィール編集でこのサイトのURLを追加
 5. 自動的に本人確認マーク（緑のチェック✓）が表示されます
+
+### Blueskyドメイン認証の設定方法
+
+1. 「SNS本人認証設定」を展開
+2. Blueskyプロフィール URL にドメイン変更前のプロフィールURLを入力（例: https://bsky.app/profile/username.bsky.social）
+3. 設定を保存
+4. 静的サイトの場合は[CarryPod](https://github.com/villyoshioka/CarryPod)で静的化して公開
+5. Blueskyアプリで 設定 → アカウント → ハンドルを変更 → 「自分のドメインを持っています」を選択
+6. 「DNSパネルがない場合」に切り替え → サイトのドメインを入力 → 「テキストファイルを確認」で認証
 
 ---
 
@@ -68,6 +78,7 @@ WordPressサイトを守るための軽量プラグインです。ギリシャ�
 
 - コンテンツ保護機能は完全な防御ではなく、抑止力として機能します
 - 重要なコンテンツには、より強力な保護手段の併用を推奨します
+- CarryPodで静的化している場合、Blueskyドメイン認証およびiframe埋め込み許可ドメイン設定を利用するにはCarryPod v2.8.1以降が必要です
 
 ---
 

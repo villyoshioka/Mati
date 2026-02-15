@@ -240,6 +240,11 @@
 	line-height: 1.4;
 }
 
+.mati-form-group textarea.large-text {
+	max-width: 100%;
+	width: 100%;
+}
+
 .mati-form-group input.regular-text {
 	width: 25em;
 	max-width: 100%;

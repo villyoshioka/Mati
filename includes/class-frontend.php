@@ -41,6 +41,9 @@ class Mati_Frontend {
 		// SEOメタタグ追加のフック
 		add_action( 'wp_head', array( $this, 'add_seo_meta_tags' ), 1 );
 
+		// .well-known/atproto-did ハンドラー
+		add_action( 'init', array( $this, 'handle_atproto_did_request' ) );
+
 		// レスポンスヘッダー追加のフック
 		add_filter( 'wp_headers', array( $this, 'add_security_headers' ), 10 );
 
@@ -100,6 +103,29 @@ class Mati_Frontend {
 	}
 
 	/**
+	 * .well-known/atproto-did リクエストを処理
+	 */
+	public function handle_atproto_did_request() {
+		$settings = $this->settings_manager->get_settings();
+		$did      = isset( $settings['bluesky_did'] ) ? $settings['bluesky_did'] : '';
+
+		if ( empty( $did ) ) {
+			return;
+		}
+
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+		$path        = wp_parse_url( $request_uri, PHP_URL_PATH );
+
+		if ( $path !== '/.well-known/atproto-did' ) {
+			return;
+		}
+
+		header( 'Content-Type: text/plain; charset=utf-8' );
+		echo $did; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- DID is sanitized on save
+		exit;
+	}
+
+	/**
 	 * セキュリティヘッダーを追加
 	 */
 	public function add_security_headers( $headers ) {
@@ -129,17 +155,23 @@ class Mati_Frontend {
 			$headers['X-Robots-Tag'] = implode( ', ', $robots_directives );
 		}
 
-		// Content-Security-Policy: frame-ancestors 'self' を追加
+		// Content-Security-Policy: frame-ancestors を追加
+		$frame_ancestors = "'self'";
+		$custom_domains  = isset( $settings['frame_ancestors_domains'] ) ? $settings['frame_ancestors_domains'] : '';
+		if ( ! empty( $custom_domains ) ) {
+			$domains = array_filter( array_map( 'trim', explode( "\n", $custom_domains ) ) );
+			if ( ! empty( $domains ) ) {
+				$frame_ancestors .= ' ' . implode( ' ', $domains );
+			}
+		}
+
 		if ( isset( $headers['Content-Security-Policy'] ) ) {
-			// 既存のCSPヘッダーがある場合
 			$csp = $headers['Content-Security-Policy'];
-			// frame-ancestorsが既に含まれていない場合のみ追加
 			if ( stripos( $csp, 'frame-ancestors' ) === false ) {
-				$headers['Content-Security-Policy'] = $csp . "; frame-ancestors 'self'";
+				$headers['Content-Security-Policy'] = $csp . '; frame-ancestors ' . $frame_ancestors;
 			}
 		} else {
-			// CSPヘッダーがない場合は新規作成
-			$headers['Content-Security-Policy'] = "frame-ancestors 'self'";
+			$headers['Content-Security-Policy'] = 'frame-ancestors ' . $frame_ancestors;
 		}
 
 		// X-Content-Type-Options: nosniff を追加
