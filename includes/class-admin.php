@@ -518,7 +518,7 @@ class Mati_Admin {
 								Bluesky プロフィール URL
 								<span class="mati-tooltip-wrapper">
 									<span class="mati-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
-									<span class="mati-tooltip-content" role="tooltip">Blueskyのハンドル名にサイトのドメインを使用するための、ドメイン変更前のプロフィールURLを入力してください。サイト所有者であることが証明され、なりすましを防止できます。<br><br><strong>手順:</strong><br>1. ここにBlueskyプロフィールURLを入力して保存<br>2. 静的サイトの場合はCarryPodで静的化して公開<br>3. Blueskyアプリで 設定 → アカウント → ハンドルを変更 → 「自分のドメインを持っています」を選択<br>4. 「DNSパネルがない場合」に切り替え → サイトのドメインを入力 → 「テキストファイルを確認」で認証</span>
+									<span class="mati-tooltip-content" role="tooltip">Blueskyのハンドル名にサイトのドメインを使用するための、ドメイン変更前のプロフィールURLを入力してください。サイト所有者であることが証明され、なりすましを防止できます。<br><br><strong>手順:</strong><br>1. ここにBlueskyプロフィールURLを入力して保存<br>2. 静的サイトの場合はCarryPodで静的化して公開<br>3. Blueskyアプリで 設定 → アカウント → ハンドルを変更 → 「自分のドメインを持っています」を選択<br>4. 「DNSパネルがない場合」に切り替え → サイトのドメインを入力 → 「テキストファイルを確認」で認証<br><br><strong>認証に失敗する場合:</strong><br>ファイアウォール等で海外からのアクセスを制限している場合、Blueskyの認証サーバーがサイトにアクセスできず失敗することがあります。<code>/.well-known/atproto-did</code> へのアクセスを許可してください。</span>
 								</span>
 							</label>
 							<?php
