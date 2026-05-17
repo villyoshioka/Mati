@@ -7,50 +7,40 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+if ( false ) {
+	class CP_Cache {
+		public static function get_instance(): self { return new self(); }
+		public function clear_all(): void {}
+	}
+}
+
 class Mati_Settings {
 
-	/**
-	 * シングルトンインスタンス
-	 */
-	private static $instance = null;
+	private static ?self $instance = null;
 
-	/**
-	 * 設定のオプション名
-	 */
-	const OPTION_NAME = 'mati_settings';
+	const string OPTION_NAME = 'mati_settings';
 
 	/**
 	 * ベータモードパスワードハッシュ（SHA-256）
 	 * セキュリティ: ハッシュ値のみを保存し、平文パスワードはソースコードに含めない
 	 */
-	private $beta_password_hash = '15b85ad5e5d01a928251f71e447b682aa06c026295e2c1f89287d0c4837ec6f3';
+	private string $beta_password_hash = '15b85ad5e5d01a928251f71e447b682aa06c026295e2c1f89287d0c4837ec6f3';
 
-	/**
-	 * シングルトンインスタンスを取得
-	 */
-	public static function get_instance() {
+	public static function get_instance(): static {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
 	}
 
-	/**
-	 * コンストラクタ
-	 */
 	private function __construct() {
-		// 特に初期化処理は不要
 	}
 
-	/**
-	 * 設定を取得
-	 */
-	public function get_settings() {
+	public function get_settings(): array {
 		$defaults = $this->get_default_settings();
 		$settings = get_option( self::OPTION_NAME, array() );
 		$merged   = wp_parse_args( $settings, $defaults );
 
-		// obfuscation_seedが空の場合は生成
 		if ( empty( $merged['obfuscation_seed'] ) ) {
 			$merged['obfuscation_seed'] = $this->generate_seed();
 		}
@@ -58,46 +48,39 @@ class Mati_Settings {
 		return $merged;
 	}
 
-	/**
-	 * デフォルト設定を取得
-	 */
-	public function get_default_settings() {
+	public function get_default_settings(): array {
 		return array(
-			// メタタグ削除系
-			'meta_removal_enabled'       => false, // 親チェックボックス
-			'remove_generator'           => false,
-			'remove_rest_api_link'       => false,
-			'remove_oembed'              => false,
-			'remove_rsd'                 => false,
-			'remove_wlwmanifest'         => false,
-			'remove_shortlink'           => false,
-			'remove_pingback'            => false,
+			'meta_removal_enabled'       => true,
+			'remove_generator'           => true,
+			'remove_rest_api_link'       => true,
+			'remove_oembed'              => true,
+			'remove_rsd'                 => true,
+			'remove_wlwmanifest'         => true,
+			'remove_shortlink'           => true,
+			'remove_pingback'            => true,
 
-			// コンテンツ保護
-			'content_protection_enabled' => false, // 親チェックボックス
-			'disable_right_click'        => false,
-			'disable_devtools_keys'      => false,
-			'disable_save_keys'          => false,
-			'disable_text_selection'     => false,
-			'disable_image_drag'         => false,
-			'disable_print'              => false,
-			'add_noarchive_meta'         => false,
-			'add_noimageindex_meta'      => false,
-			'add_noai_meta'              => false,
+			'content_protection_enabled' => true,
+			'disable_right_click'        => true,
+			'disable_devtools_keys'      => true,
+			'disable_save_keys'          => true,
+			'disable_image_drag'         => true,
+			'disable_print'              => true,
+			'add_noarchive_meta'         => true,
+			'add_noimageindex_meta'      => true,
+			'add_noai_meta'              => true,
 
-			// SEO
+			'google_analytics_id'        => '',
 			'google_verification'        => '',
 			'bing_verification'          => '',
 			'fediverse_profile_urls'     => array(),
 			'bluesky_profile_url'        => '',
 			'bluesky_did'                => '',
-			'enable_jsonld'              => false,
+			'enable_jsonld'              => true,
 			'add_noindex_meta'           => false,
 
-			// その他
+			'disable_text_selection'     => false,
 			'frame_ancestors_domains'    => '',
 
-			// セキュリティ
 			'obfuscation_seed'           => '',
 		);
 	}
@@ -107,21 +90,15 @@ class Mati_Settings {
 	 *
 	 * @param array $new_settings 新しい設定値
 	 * @param array $options オプション（skip_seed_regen, skip_cp_clear）
-	 * @return bool 成功したらtrue
 	 */
-	public function save_settings( $new_settings, $options = array() ) {
-		// obfuscation seedを再生成（skip_seed_regenフラグがない場合）
+	public function save_settings( array $new_settings, array $options = array() ): bool {
 		if ( empty( $options['skip_seed_regen'] ) ) {
 			$new_settings['obfuscation_seed'] = $this->generate_seed();
 		}
 
-		// サニタイズ
 		$sanitized = $this->sanitize_settings( $new_settings );
-
-		// 保存
 		update_option( self::OPTION_NAME, $sanitized );
 
-		// CarryPodキャッシュクリア（skip_cp_clearフラグがない場合）
 		if ( empty( $options['skip_cp_clear'] ) && class_exists( 'CP_Cache' ) ) {
 			$cache = CP_Cache::get_instance();
 			// 無限ループ回避: CPにMatiシード再生成をスキップさせる
@@ -138,13 +115,9 @@ class Mati_Settings {
 		return true;
 	}
 
-	/**
-	 * 設定をサニタイズ
-	 */
-	private function sanitize_settings( $settings ) {
+	private function sanitize_settings( array $settings ): array {
 		$sanitized = array();
 
-		// チェックボックス系（boolean）
 		$checkbox_keys = array(
 			'meta_removal_enabled',
 			'remove_generator',
@@ -172,58 +145,56 @@ class Mati_Settings {
 			$sanitized[ $key ] = ! empty( $settings[ $key ] );
 		}
 
-		// テキスト入力系（SEO認証メタタグ）
-		// 英数字、ハイフン、アンダースコアのみ許可
+		$sanitized['google_analytics_id'] = $this->sanitize_ga_id( $settings['google_analytics_id'] ?? '' );
 		$sanitized['google_verification'] = $this->sanitize_verification_code( $settings['google_verification'] ?? '' );
 		$sanitized['bing_verification']   = $this->sanitize_verification_code( $settings['bing_verification'] ?? '' );
 
-		// Fediverse プロフィールURL（HTTPS必須、配列形式）
 		$sanitized['fediverse_profile_urls'] = $this->sanitize_profile_urls( $settings['fediverse_profile_urls'] ?? array() );
-
-		// Bluesky プロフィールURL（HTTPS必須）
 		$sanitized['bluesky_profile_url'] = $this->sanitize_profile_url( $settings['bluesky_profile_url'] ?? '' );
-
-		// Bluesky DID
 		$sanitized['bluesky_did'] = $this->sanitize_bluesky_did( $settings['bluesky_did'] ?? '' );
-
-		// frame-ancestors 許可ドメイン
 		$sanitized['frame_ancestors_domains'] = $this->sanitize_frame_ancestors_domains( $settings['frame_ancestors_domains'] ?? '' );
 
 		return $sanitized;
 	}
 
-	/**
-	 * 認証コードをサニタイズ
-	 */
-	private function sanitize_verification_code( $code ) {
-		// 空の場合はそのまま返す
+	private function sanitize_verification_code( string $code ): string {
 		if ( empty( $code ) ) {
 			return '';
 		}
 
-		// 英数字、ハイフン、アンダースコアのみ許可
 		$code = preg_replace( '/[^a-zA-Z0-9_-]/', '', $code );
 
 		return sanitize_text_field( $code );
 	}
 
 	/**
-	 * プロフィールURLをサニタイズ（HTTPS必須）
-	 *
-	 * @param string $url 入力されたURL
-	 * @return string サニタイズされたURL
+	 * Google Analytics測定IDをサニタイズ（G-XXXXXXXXXX形式）
 	 */
-	private function sanitize_profile_url( $url ) {
-		// 空の場合はそのまま返す
+	private function sanitize_ga_id( string $id ): string {
+		if ( empty( $id ) ) {
+			return '';
+		}
+
+		$id = sanitize_text_field( trim( $id ) );
+
+		if ( ! preg_match( '/^G-[A-Z0-9]+$/', $id ) ) {
+			return '';
+		}
+
+		return $id;
+	}
+
+	/**
+	 * プロフィールURLをサニタイズ（HTTPS必須）
+	 */
+	private function sanitize_profile_url( string $url ): string {
 		if ( empty( $url ) ) {
 			return '';
 		}
 
-		// URLとして整形
 		$url = esc_url_raw( $url, array( 'https' ) );
 
-		// HTTPSで始まっているか確認
-		if ( strpos( $url, 'https://' ) !== 0 ) {
+		if ( ! str_starts_with( $url, 'https://' ) ) {
 			return '';
 		}
 
@@ -232,11 +203,8 @@ class Mati_Settings {
 
 	/**
 	 * プロフィールURLの配列をサニタイズ（最大5個まで）
-	 *
-	 * @param array $urls プロフィールURLの配列
-	 * @return array サニタイズされたURLの配列
 	 */
-	private function sanitize_profile_urls( $urls ) {
+	private function sanitize_profile_urls( array|string $urls ): array {
 		if ( ! is_array( $urls ) ) {
 			return array();
 		}
@@ -245,14 +213,12 @@ class Mati_Settings {
 		$count     = 0;
 
 		foreach ( $urls as $url ) {
-			// 最大5個まで
 			if ( $count >= 5 ) {
 				break;
 			}
 
 			$sanitized_url = $this->sanitize_profile_url( $url );
 
-			// 空のURLはスキップ
 			if ( ! empty( $sanitized_url ) ) {
 				$sanitized[] = $sanitized_url;
 				$count++;
@@ -264,11 +230,8 @@ class Mati_Settings {
 
 	/**
 	 * Bluesky DIDをサニタイズ
-	 *
-	 * @param string $did DID文字列
-	 * @return string サニタイズされたDID
 	 */
-	private function sanitize_bluesky_did( $did ) {
+	private function sanitize_bluesky_did( string $did ): string {
 		if ( empty( $did ) ) {
 			return '';
 		}
@@ -285,11 +248,8 @@ class Mati_Settings {
 
 	/**
 	 * frame-ancestors許可ドメインをサニタイズ
-	 *
-	 * @param string $domains 改行区切りのドメインリスト
-	 * @return string サニタイズされたドメインリスト（改行区切り）
 	 */
-	private function sanitize_frame_ancestors_domains( $domains ) {
+	private function sanitize_frame_ancestors_domains( string $domains ): string {
 		if ( empty( $domains ) ) {
 			return '';
 		}
@@ -303,7 +263,6 @@ class Mati_Settings {
 				continue;
 			}
 
-			// macOSスマートクォートを除去
 			$line = str_replace(
 				array( "\xe2\x80\x98", "\xe2\x80\x99", "\xe2\x80\x9c", "\xe2\x80\x9d" ),
 				'',
@@ -314,18 +273,15 @@ class Mati_Settings {
 				continue;
 			}
 
-			// http:// を https:// に自動補正
-			if ( strpos( $line, 'http://' ) === 0 ) {
+			if ( str_starts_with( $line, 'http://' ) ) {
 				$line = 'https://' . substr( $line, 7 );
 			}
 
-			// HTTPS URLのみ許可
 			$line = esc_url_raw( $line, array( 'https' ) );
-			if ( strpos( $line, 'https://' ) !== 0 ) {
+			if ( ! str_starts_with( $line, 'https://' ) ) {
 				continue;
 			}
 
-			// originのみ抽出（パス除去）
 			$parsed = wp_parse_url( $line );
 			if ( $parsed && isset( $parsed['host'] ) ) {
 				$origin = 'https://' . $parsed['host'];
@@ -336,25 +292,28 @@ class Mati_Settings {
 			}
 		}
 
-		// 重複除去
 		$sanitized_lines = array_unique( $sanitized_lines );
 
 		return implode( "\n", $sanitized_lines );
 	}
 
-	/**
-	 * 設定をリセット
-	 */
-	public function reset_settings() {
+	public function reset_settings(): bool {
 		$defaults = $this->get_default_settings();
 		update_option( self::OPTION_NAME, $defaults );
+
+		if ( class_exists( 'CP_Cache' ) ) {
+			add_filter( 'cp_skip_mati_seed_regen', '__return_true', 9999 );
+			try {
+				CP_Cache::get_instance()->clear_all();
+			} finally {
+				remove_filter( 'cp_skip_mati_seed_regen', '__return_true', 9999 );
+			}
+		}
+
 		return true;
 	}
 
-	/**
-	 * 特定の設定値を取得
-	 */
-	public function get_setting( $key, $default = null ) {
+	public function get_setting( string $key, mixed $default = null ): mixed {
 		$settings = $this->get_settings();
 		return $settings[ $key ] ?? $default;
 	}
@@ -364,10 +323,9 @@ class Mati_Settings {
 	 *
 	 * @return string JSON形式の設定データ
 	 */
-	public function export_settings() {
+	public function export_settings(): string {
 		$settings = $this->get_settings();
 
-		// バージョン情報を先頭に追加（フラット構造）
 		$export_data = array_merge(
 			array( 'version' => MATI_VERSION ),
 			$settings
@@ -380,20 +338,20 @@ class Mati_Settings {
 	 * 設定をインポート
 	 *
 	 * @param string $json JSON形式の設定データ
-	 * @return bool|WP_Error 成功ならtrue、失敗ならWP_Error
+	 * @return true|\WP_Error 成功ならtrue、失敗ならWP_Error
 	 */
-	public function import_settings( $json ) {
+	public function import_settings( string $json ): true|\WP_Error {
 		// JSONサイズチェック（100KB制限）
 		if ( strlen( $json ) > 100000 ) {
 			return new WP_Error( 'json_too_large', 'JSONデータが大きすぎます（最大100KB）。' );
 		}
 
-		// JSONデコード（ネスト深さを10階層に制限）
-		$imported = json_decode( $json, true, 10 );
-
-		if ( json_last_error() !== JSON_ERROR_NONE ) {
+		if ( ! json_validate( $json ) ) {
 			return new WP_Error( 'invalid_json', 'JSONの形式が正しくありません。' );
 		}
+
+		// ネスト深さを10階層に制限
+		$imported = json_decode( $json, true, 10 );
 
 		if ( ! is_array( $imported ) ) {
 			return new WP_Error( 'invalid_format', '設定データの形式が正しくありません。' );
@@ -404,10 +362,6 @@ class Mati_Settings {
 			return new WP_Error( 'too_many_keys', '設定データのキー数が多すぎます。' );
 		}
 
-		// バージョン情報を取得（フラット構造）
-		$import_version = isset( $imported['version'] ) ? $imported['version'] : null;
-
-		// 設定データを取得（versionキーを除外）
 		$settings_data = $imported;
 		if ( isset( $settings_data['version'] ) ) {
 			unset( $settings_data['version'] );
@@ -418,25 +372,25 @@ class Mati_Settings {
 			$settings_data = $imported['settings'];
 		}
 
-		// 現在の設定を取得
 		$current = $this->get_settings();
-
-		// インポート設定をマージ（現在の設定を上書き）
 		$merged = array_merge( $current, $settings_data );
 
-		// サニタイズして保存
 		$sanitized = $this->sanitize_settings( $merged );
 		update_option( self::OPTION_NAME, $sanitized );
+
+		if ( class_exists( 'CP_Cache' ) ) {
+			add_filter( 'cp_skip_mati_seed_regen', '__return_true', 9999 );
+			try {
+				CP_Cache::get_instance()->clear_all();
+			} finally {
+				remove_filter( 'cp_skip_mati_seed_regen', '__return_true', 9999 );
+			}
+		}
 
 		return true;
 	}
 
-	/**
-	 * ベータモードが有効かどうかを確認
-	 *
-	 * @return bool 有効ならtrue
-	 */
-	public function is_beta_mode_enabled() {
+	public function is_beta_mode_enabled(): bool {
 		return (bool) get_transient( 'mati_beta_channel' );
 	}
 
@@ -447,11 +401,8 @@ class Mati_Settings {
 	 * - タイミングセーフな比較（hash_equals）でハッシュ値を検証
 	 * - パスワードは平文保存せず、SHA-256ハッシュ値のみ保存
 	 * - ブルートフォース攻撃対策: レート制限実装済み（5回失敗で10分間ロック）
-	 *
-	 * @param string $password 入力されたパスワード
-	 * @return bool|WP_Error 認証成功ならtrue、レート制限超過ならWP_Error
 	 */
-	public function enable_beta_mode( $password ) {
+	public function enable_beta_mode( string $password ): bool|\WP_Error {
 		$user_id      = get_current_user_id();
 		$attempts_key = 'mati_beta_attempts_' . $user_id;
 
@@ -463,49 +414,27 @@ class Mati_Settings {
 
 		// タイミングセーフなハッシュ比較
 		if ( hash_equals( $this->beta_password_hash, hash( 'sha256', $password ) ) ) {
-			// 成功時は試行回数をクリア
 			delete_transient( $attempts_key );
 			set_transient( 'mati_beta_channel', true, DAY_IN_SECONDS );
 			return true;
 		}
 
-		// 失敗回数をインクリメント（10分間保持）
 		$new_attempts = $attempts ? $attempts + 1 : 1;
 		set_transient( $attempts_key, $new_attempts, 10 * MINUTE_IN_SECONDS );
 
 		return false;
 	}
 
-	/**
-	 * ベータモードを無効化
-	 */
-	public function disable_beta_mode() {
+	public function disable_beta_mode(): void {
 		delete_transient( 'mati_beta_channel' );
-		// ベータ用キャッシュもクリア
 		delete_transient( 'mati_github_release_cache_beta' );
 	}
 
-	/**
-	 * obfuscation seedを生成
-	 *
-	 * @return string 32文字のランダムな文字列
-	 */
-	private function generate_seed() {
-		// wp_generate_password()が利用可能な場合はそれを使用
+	private function generate_seed(): string {
 		if ( function_exists( 'wp_generate_password' ) ) {
 			return wp_generate_password( 32, false );
 		}
-
-		// フォールバック: PHPネイティブ関数のみ使用
-		$chars  = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-		$length = 32;
-		$seed   = '';
-
-		for ( $i = 0; $i < $length; $i++ ) {
-			$seed .= $chars[ mt_rand( 0, strlen( $chars ) - 1 ) ];
-		}
-
-		return $seed;
+		// Fallback: pluggable.php 読み込み前の場合
+		return bin2hex( random_bytes( 16 ) );
 	}
 }
-

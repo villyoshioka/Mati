@@ -8,17 +8,22 @@
 	$(document).ready(function() {
 
 		// ========================================
+		// prefers-reduced-motion 対応
+		// ========================================
+
+		var motionDuration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 120;
+		var motionDurationLong = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 200;
+
+		// ========================================
 		// 未保存の変更を追跡
 		// ========================================
 
 		let hasUnsavedChanges = false;
 
-		// フォームの変更を監視
 		$('#mati-settings-form').on('change', 'input, textarea, select', function() {
 			hasUnsavedChanges = true;
 		});
 
-		// ページ離脱時の確認
 		$(window).on('beforeunload', function(e) {
 			if (hasUnsavedChanges) {
 				const message = '変更が保存されていません。このページを離れますか？';
@@ -32,35 +37,30 @@
 		// ========================================
 
 		function showConfirm(message, onConfirm, onCancel) {
-			// 既存の確認ダイアログを削除
-			$('.mati-confirm-dialog').remove();
+			$('.nau-confirm-dialog').remove();
 
-			// ダイアログHTMLを作成
-			const $dialog = $('<div class="mati-confirm-dialog">' +
-				'<div class="mati-confirm-overlay"></div>' +
-				'<div class="mati-confirm-box">' +
+			const $dialog = $('<div class="nau-confirm-dialog">' +
+				'<div class="nau-confirm-overlay"></div>' +
+				'<div class="nau-confirm-box">' +
 				'<h3>確認</h3>' +
 				'<p>' + message + '</p>' +
-				'<div class="mati-confirm-buttons">' +
-				'<button class="button button-primary mati-confirm-yes">はい</button>' +
-				'<button class="button mati-confirm-no">いいえ</button>' +
+				'<div class="nau-confirm-buttons">' +
+				'<button class="button button-primary nau-confirm-yes">はい</button>' +
+				'<button class="button nau-confirm-no">いいえ</button>' +
 				'</div>' +
 				'</div>' +
 				'</div>');
 
-			// ダイアログを追加
 			$('body').append($dialog);
 
-			// はいボタンのイベント
-			$dialog.find('.mati-confirm-yes').on('click', function() {
+			$dialog.find('.nau-confirm-yes').on('click', function() {
 				$dialog.remove();
 				if (typeof onConfirm === 'function') {
 					onConfirm();
 				}
 			});
 
-			// いいえボタンのイベント
-			$dialog.find('.mati-confirm-no, .mati-confirm-overlay').on('click', function() {
+			$dialog.find('.nau-confirm-no, .nau-confirm-overlay').on('click', function() {
 				$dialog.remove();
 				if (typeof onCancel === 'function') {
 					onCancel();
@@ -117,8 +117,8 @@
 		function saveAllAccordionStates() {
 			try {
 				const states = {};
-				$('.mati-accordion-header').each(function() {
-					const sectionId = $(this).closest('.mati-accordion-section').data('section');
+				$('.nau-accordion-header').each(function() {
+					const sectionId = $(this).closest('.nau-accordion-section').data('section');
 					const isExpanded = $(this).attr('aria-expanded') === 'true';
 					states[sectionId] = isExpanded;
 				});
@@ -129,80 +129,114 @@
 		}
 
 		/**
-		 * アコーディオンの初期化
-		 * - LocalStorageから保存された状態を復元
-		 * - 保存された状態がない場合はデフォルト状態を使用
+		 * アコーディオンの状態を設定
+		 * @param {boolean} noTransition - trueの場合、トランジションなしで即座に状態を変更
+		 */
+		function setAccordionState(header, content, isExpanded, noTransition) {
+			const $header = $(header);
+			const $content = $(content);
+
+			$header.attr('aria-expanded', isExpanded);
+			$content.attr('aria-hidden', !isExpanded);
+
+			if (noTransition) {
+				// 初期表示時: トランジションなしで即座に状態を設定
+				if (isExpanded) {
+					$content.show();
+				} else {
+					$content.hide();
+				}
+			} else {
+				// ユーザー操作時: jQueryのslideアニメーション
+				if (isExpanded) {
+					$content.slideDown(motionDuration);
+				} else {
+					$content.slideUp(motionDuration);
+				}
+			}
+		}
+
+		/**
+		 * デフォルトの開閉状態を取得
+		 */
+		function getDefaultState(sectionId) {
+			const defaultExpanded = ['content-protection'];
+			return defaultExpanded.includes(sectionId);
+		}
+
+		/**
+		 * アコーディオン機能の初期化
 		 */
 		function initAccordions() {
-			$('.mati-accordion-section').each(function() {
-				const $section = $(this);
-				const sectionId = $section.data('section');
-				const $header = $section.find('.mati-accordion-header');
-				const $content = $section.find('.mati-accordion-content');
+			const accordions = document.querySelectorAll('.nau-accordion-section');
+
+			accordions.forEach(function(accordion) {
+				const header = accordion.querySelector('.nau-accordion-header');
+				const content = accordion.querySelector('.nau-accordion-content');
+				const sectionId = accordion.dataset.section;
+
+				if (!header || !content) return;
 
 				// LocalStorageから状態を取得
 				const savedState = getAccordionState(sectionId);
+				const isExpanded = savedState !== null ? savedState : getDefaultState(sectionId);
 
-				if (savedState !== null) {
-					// 保存された状態がある場合はそれを使用
-					$header.attr('aria-expanded', savedState);
-					$content.attr('aria-hidden', !savedState);
+				// 初期状態を設定（アニメーションなし）
+				content.classList.add('nau-no-transition');
+				setAccordionState(header, content, isExpanded, true);
 
-					if (savedState) {
-						$content.show();
-					} else {
-						$content.hide();
+				requestAnimationFrame(function() {
+					content.classList.remove('nau-no-transition');
+				});
+
+				header.addEventListener('click', function() {
+					const currentState = header.getAttribute('aria-expanded') === 'true';
+					const newState = !currentState;
+
+					setAccordionState(header, content, newState);
+					// LocalStorageへの保存はフォーム保存時のみ行う
+				});
+
+				header.addEventListener('keydown', function(e) {
+					if (e.key === 'Enter' || e.key === ' ') {
+						e.preventDefault();
+						header.click();
 					}
-				}
-				// 保存された状態がない場合は、PHPで設定されたデフォルト状態をそのまま使用
+				});
 			});
 		}
-
-		// ========================================
-		// アコーディオン機能
-		// ========================================
-
-		$('.mati-accordion-header').on('click', function() {
-			const $header = $(this);
-			const $content = $header.next('.mati-accordion-content');
-			const isExpanded = $header.attr('aria-expanded') === 'true';
-
-			if (isExpanded) {
-				// 閉じる
-				$header.attr('aria-expanded', 'false');
-				$content.attr('aria-hidden', 'true').slideUp(200);
-			} else {
-				// 開く
-				$header.attr('aria-expanded', 'true');
-				$content.attr('aria-hidden', 'false').slideDown(200);
-			}
-		});
 
 		// ========================================
 		// 親子チェックボックスの挙動
 		// ========================================
 
-		// 親チェックボックスがONになったとき → 全ての子をONにする
 		$('#mati-meta-removal-enabled, #mati-content-protection-enabled').on('change', function() {
 			const $parent = $(this);
 			const parentId = $parent.attr('id');
 			const isChecked = $parent.prop('checked');
 
 			if (isChecked) {
-				// 親がONになった → 全ての子をONにする
 				$('.mati-child-checkbox[data-parent="' + parentId + '"]').prop('checked', true);
 			}
 		});
 
-		// 子チェックボックスが変更されたとき → 親を自動でOFFにする
 		$('.mati-child-checkbox').on('change', function() {
 			const $child = $(this);
 			const parentId = $child.data('parent');
 			const $parent = $('#' + parentId);
 
-			// 親がONの状態で子を変更した場合、親を自動でOFFにする
 			if ($parent.prop('checked')) {
 				$parent.prop('checked', false);
+			}
+		});
+
+		// ========================================
+		// 入力フィールドでのEnterキーによるフォーム送信を防止
+		// ========================================
+
+		$('#mati-settings-form').on('keydown', 'input[type="text"], input[type="url"], input[type="number"]', function(e) {
+			if (e.key === 'Enter') {
+				e.preventDefault();
 			}
 		});
 
@@ -218,12 +252,10 @@
 			const $spinner = $('.mati-form-actions .spinner');
 			const $message = $('#mati-message');
 
-			// ボタンを無効化、スピナー表示
 			$saveButton.prop('disabled', true);
 			$spinner.addClass('is-active');
 			$message.hide();
 
-			// フォームデータを収集
 			const formData = {};
 			$form.find('input[type="checkbox"]').each(function() {
 				const $checkbox = $(this);
@@ -233,16 +265,13 @@
 				const $input = $(this);
 				const name = $input.attr('name');
 
-				// 配列形式（name[]）の場合
 				if (name && name.endsWith('[]')) {
-					// []を削除したキー名を使用
 					const arrayKey = name.replace('[]', '');
 					if (!formData[arrayKey]) {
 						formData[arrayKey] = [];
 					}
 					formData[arrayKey].push($input.val());
 				} else {
-					// 通常のフィールド
 					formData[name] = $input.val();
 				}
 			});
@@ -254,7 +283,6 @@
 				}
 			});
 
-			// Ajax送信
 			$.ajax({
 				url: matiData.ajaxurl,
 				type: 'POST',
@@ -265,17 +293,15 @@
 				},
 				success: function(response) {
 					if (response.success) {
-						// 保存成功時は未保存フラグをクリア
 						hasUnsavedChanges = false;
 
-						// アコーディオンの状態をLocalStorageに保存
 						saveAllAccordionStates();
 
 						$message
 							.removeClass('notice-error')
 							.addClass('notice notice-success')
 							.html('<p>' + response.data.message + '</p>')
-							.slideDown();
+							.slideDown(motionDurationLong);
 
 						// CarryPodと同様に、保存後にページをリロード
 						setTimeout(function() {
@@ -286,11 +312,10 @@
 							.removeClass('notice-success')
 							.addClass('notice notice-error')
 							.html('<p>' + response.data.message + '</p>')
-							.slideDown();
+							.slideDown(motionDurationLong);
 
-						// 3秒後にメッセージを非表示
 						setTimeout(function() {
-							$message.slideUp();
+							$message.slideUp(motionDurationLong);
 						}, 3000);
 					}
 				},
@@ -299,10 +324,9 @@
 						.removeClass('notice-success')
 						.addClass('notice notice-error')
 						.html('<p>通信エラーが発生しました。</p>')
-						.slideDown();
+						.slideDown(motionDurationLong);
 				},
 				complete: function() {
-					// ボタンを有効化、スピナー非表示
 					$saveButton.prop('disabled', false);
 					$spinner.removeClass('is-active');
 				}
@@ -321,12 +345,10 @@
 			const $message = $('#mati-message');
 
 			showConfirm('本当にリセットしますか？\nサイトへの変更も全て元に戻ります。', function() {
-				// ボタンを無効化、スピナー表示
 				$resetButton.prop('disabled', true);
 				$spinner.addClass('is-active');
 				$message.hide();
 
-				// Ajax送信
 				$.ajax({
 					url: matiData.ajaxurl,
 					type: 'POST',
@@ -336,17 +358,15 @@
 					},
 					success: function(response) {
 						if (response.success) {
-							// リセット成功時は未保存フラグをクリア（リロード前に）
 							hasUnsavedChanges = false;
 
-							// アコーディオンの状態もリセット
 							localStorage.removeItem('mati_accordion_states');
 
 							$message
 								.removeClass('notice-error')
 								.addClass('notice notice-success')
 								.html('<p>' + response.data.message + '</p>')
-								.slideDown();
+								.slideDown(motionDurationLong);
 
 							// ページをリロード（設定値を反映するため）
 							setTimeout(function() {
@@ -357,7 +377,7 @@
 								.removeClass('notice-success')
 								.addClass('notice notice-error')
 								.html('<p>' + response.data.message + '</p>')
-								.slideDown();
+								.slideDown(motionDurationLong);
 						}
 					},
 					error: function() {
@@ -365,16 +385,14 @@
 							.removeClass('notice-success')
 							.addClass('notice notice-error')
 							.html('<p>通信エラーが発生しました。</p>')
-							.slideDown();
+							.slideDown(motionDurationLong);
 					},
 					complete: function() {
-						// ボタンを有効化、スピナー非表示
 						$resetButton.prop('disabled', false);
 						$spinner.removeClass('is-active');
 					}
 				});
 			}, function() {
-				// キャンセル時は何もしない
 			});
 		});
 
@@ -470,65 +488,47 @@
 		// Fediverse URL の動的追加・削除
 		// ========================================
 
-		// URL を追加
 		$('#mati-add-fediverse-url').on('click', function() {
 			const $container = $('#mati-fediverse-urls-container');
 			const currentCount = $container.find('.mati-fediverse-url-row').length;
 
-			// 最大5個まで
 			if (currentCount >= 5) {
 				alert('URLは最大5個までです。');
 				return;
 			}
 
-			// 新しい行を追加
-			const $newRow = $('<div class="mati-fediverse-url-row">' +
-				'<input type="url" name="fediverse_profile_urls[]" class="regular-text" value="" placeholder="例: https://misskey.io/@username">' +
-				'<button type="button" class="mati-remove-url">削除</button>' +
+			const $newRow = $('<div class="nau-input-row mati-fediverse-url-row">' +
+				'<input type="url" name="fediverse_profile_urls[]" class="regular-text" value="" placeholder="プロフィールURL（例: https://misskey.io/@username）">' +
+				'<button type="button" class="button button-caution nau-input-row-remove mati-remove-url">削除</button>' +
 				'</div>');
 
 			$container.append($newRow);
 
-			// 削除ボタンの表示を更新
 			updateRemoveButtons();
 		});
 
-		// URL を削除（Bluesky削除ボタンは除外）
 		$(document).on('click', '.mati-remove-url:not(.mati-clear-bluesky)', function() {
-			$(this).closest('.mati-fediverse-url-row').remove();
+			const $container = $('#mati-fediverse-urls-container');
+			if ($container.find('.mati-fediverse-url-row').length <= 1) {
+				$(this).closest('.mati-fediverse-url-row').find('input').val('');
+			} else {
+				$(this).closest('.mati-fediverse-url-row').remove();
+			}
 			updateRemoveButtons();
 		});
 
-		// 削除ボタンの表示を更新（1個の場合は削除ボタンを非表示）
 		function updateRemoveButtons() {
-			const $container = $('#mati-fediverse-urls-container');
-			const $rows = $container.find('.mati-fediverse-url-row');
-			const count = $rows.length;
-
-			if (count === 1) {
-				$rows.find('.mati-remove-url').hide();
-			} else {
-				$rows.find('.mati-remove-url').show();
-			}
-
-			// 5個に達したら追加ボタンを無効化
-			const $addButton = $('#mati-add-fediverse-url');
-			if (count >= 5) {
-				$addButton.prop('disabled', true);
-			} else {
-				$addButton.prop('disabled', false);
-			}
+			const count = $('#mati-fediverse-urls-container').find('.mati-fediverse-url-row').length;
+			$('#mati-add-fediverse-url').prop('disabled', count >= 5);
 		}
 
-		// 初期表示時に削除ボタンの表示を更新
 		updateRemoveButtons();
 
-		// Bluesky 設定をクリア
 		$(document).on("click", ".mati-clear-bluesky", function() {
 			const $row = $(this).closest(".mati-fediverse-url-row");
 			const $input = $row.find("input[name='bluesky_profile_url']");
 			$input.val("");
-			$input.attr("placeholder", "例: https://bsky.app/profile/username.bsky.social");
+			$input.attr("placeholder", "プロフィールURL（例: https://bsky.app/profile/username.bsky.social）");
 			$input.after('<input type="hidden" name="bluesky_clear" value="1">');
 			$(this).hide();
 			hasUnsavedChanges = true;
@@ -538,89 +538,98 @@
 		// ツールチップ機能
 		// ========================================
 
-		// ツールチップの初期化
 		function initTooltips() {
 			// 既存のツールチップイベントをクリア（重複防止）
 			$(document).off('click.matiTooltip keydown.matiTooltip');
 			$(document).off('click.matiTooltipOutside');
 
-			// トリガークリック時の処理
-			$(document).on('click.matiTooltip', '.mati-tooltip-trigger', function(e) {
+			$(document).on('click.matiTooltip', '.nau-tooltip-trigger', function(e) {
 				e.preventDefault();
 				e.stopPropagation();
 
 				const $trigger = $(this);
-				const $wrapper = $trigger.closest('.mati-tooltip-wrapper');
-				const $tooltip = $wrapper.find('.mati-tooltip-content');
+				const $wrapper = $trigger.closest('.nau-tooltip-wrapper');
+				const $tooltip = $wrapper.find('.nau-tooltip-content');
 				const isActive = $trigger.hasClass('active');
 
-				// 他のツールチップを全て閉じる
-				$('.mati-tooltip-trigger').removeClass('active');
-				$('.mati-tooltip-content').removeClass('show');
+				$('.nau-tooltip-trigger').removeClass('active');
+				$('.nau-tooltip-wrapper').removeClass('show');
 
-				// クリックされたツールチップをトグル
 				if (!isActive) {
 					$trigger.addClass('active');
-					$tooltip.addClass('show');
+					$wrapper.addClass('show');
 					$trigger.attr('aria-expanded', 'true');
 				} else {
 					$trigger.attr('aria-expanded', 'false');
 				}
 			});
 
-			// キーボード操作
-			$(document).on('keydown.matiTooltip', '.mati-tooltip-trigger', function(e) {
+			$(document).on('keydown.matiTooltip', '.nau-tooltip-trigger', function(e) {
 				const $trigger = $(this);
-				const $wrapper = $trigger.closest('.mati-tooltip-wrapper');
-				const $tooltip = $wrapper.find('.mati-tooltip-content');
+				const $wrapper = $trigger.closest('.nau-tooltip-wrapper');
+				const $tooltip = $wrapper.find('.nau-tooltip-content');
 
-				// Enter or Space: トグル
 				if (e.key === 'Enter' || e.key === ' ') {
 					e.preventDefault();
 					$trigger.trigger('click');
 				}
 
-				// Escape: 閉じる
 				if (e.key === 'Escape') {
 					e.preventDefault();
 					$trigger.removeClass('active');
-					$tooltip.removeClass('show');
+					$wrapper.removeClass('show');
 					$trigger.attr('aria-expanded', 'false');
 				}
 			});
 
-			// 外側クリックで閉じる
 			$(document).on('click.matiTooltipOutside', function(e) {
-				if (!$(e.target).closest('.mati-tooltip-wrapper').length) {
-					$('.mati-tooltip-trigger').removeClass('active');
-					$('.mati-tooltip-content').removeClass('show');
-					$('.mati-tooltip-trigger').attr('aria-expanded', 'false');
+				if (!$(e.target).closest('.nau-tooltip-wrapper').length) {
+					$('.nau-tooltip-trigger').removeClass('active');
+					$('.nau-tooltip-wrapper').removeClass('show');
+					$('.nau-tooltip-trigger').attr('aria-expanded', 'false');
 				}
 			});
 
-			// フォーカスアウト時の処理
-			$('.mati-tooltip-trigger').on('blur', function() {
+			$('.nau-tooltip-trigger').on('blur', function() {
 				const $trigger = $(this);
 				// 短い遅延を設けて、他の要素へのフォーカス移動を確認
 				setTimeout(function() {
 					if (!$trigger.is(':focus')) {
 						$trigger.removeClass('active');
-						$trigger.closest('.mati-tooltip-wrapper').find('.mati-tooltip-content').removeClass('show');
+						$trigger.closest('.nau-tooltip-wrapper').removeClass('show');
 						$trigger.attr('aria-expanded', 'false');
 					}
 				}, 100);
 			});
 		}
 
-		// ツールチップ初期化を実行
 		initTooltips();
 
 		// ========================================
 		// アコーディオンの初期化
 		// ========================================
 
-		// アコーディオンの状態を復元
 		initAccordions();
+
+		// ========================================
+		// CP実行中の操作無効化監視
+		// ========================================
+
+		if (matiData.cpIsRunning) {
+			var cpPollInterval = setInterval(function() {
+				$.ajax({
+					url: matiData.ajaxurl,
+					type: 'POST',
+					data: { action: 'cp_is_running' },
+					success: function(response) {
+						if (response.success && !response.data.is_running) {
+							$('#mati-save-button, #mati-reset-button, #mati-import-settings').prop('disabled', false);
+							clearInterval(cpPollInterval);
+						}
+					}
+				});
+			}, 5000);
+		}
 
 	});
 
