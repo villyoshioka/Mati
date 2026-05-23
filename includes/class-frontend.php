@@ -427,8 +427,16 @@ class Mati_Frontend {
 		}
 	}
 
+	private function generate_mobile_guard( int &$rng, string $var_ua ): string {
+		return sprintf(
+			'var %s=navigator.userAgent||"";if(/iPhone|iPad|iPod|Android/.test(%s)&&("ontouchstart" in window))return;',
+			$var_ua, $var_ua
+		);
+	}
+
 	private function generate_devtools_immediate_check( int &$rng, bool $force = false ): string {
 		$var_h   = $this->generate_var_name( $rng );
+		$var_ua  = $this->generate_var_name( $rng );
 		$var_arr = $this->generate_var_name( $rng );
 		$var_i   = $this->generate_var_name( $rng );
 		$var_s   = $this->generate_var_name( $rng );
@@ -457,9 +465,12 @@ class Mati_Frontend {
 			$var_h, $enc_location, $enc_hostname, $var_h, $enc_endsWith, $var_h, $var_h
 		);
 
+		$mobile_guard = $this->generate_mobile_guard( $rng, $var_ua );
+
 		return sprintf(
-			'!function(){%svar %s=[];for(var %s=0;%s<500;%s++)%s.push({a:%s,b:"x".repeat(20)});var %s=Date["%s"]();console["%s"](%s);var %s=Date["%s"]()-%s;%s=Date["%s"]();console["%s"](%s);var %s=Date["%s"]()-%s;console["%s"]();if(%s>0&&%s>0&&%s>%s*10){var %s=new Blob(["<style>*{margin:0;padding:0}body{min-height:100vh}</style>"],{type:"text/html"});window["%s"]["%s"](URL["%s"](%s));return}if(window["%s"]&&window["%s"]["%s"]&&window["%s"]["%s"]["%s"]===!0){var %s=new Blob(["<style>*{margin:0;padding:0}body{min-height:100vh}</style>"],{type:"text/html"});window["%s"]["%s"](URL["%s"](%s));return}if(window["%s"]&&document["%s"]("%s")){var %s=new Blob(["<style>*{margin:0;padding:0}body{min-height:100vh}</style>"],{type:"text/html"});window["%s"]["%s"](URL["%s"](%s));return}}();',
+			'!function(){%s%svar %s=[];for(var %s=0;%s<500;%s++)%s.push({a:%s,b:"x".repeat(20)});var %s=Date["%s"]();console["%s"](%s);var %s=Date["%s"]()-%s;%s=Date["%s"]();console["%s"](%s);var %s=Date["%s"]()-%s;console["%s"]();if(%s>0&&%s>0&&%s>%s*10){var %s=new Blob(["<style>*{margin:0;padding:0}body{min-height:100vh}</style>"],{type:"text/html"});window["%s"]["%s"](URL["%s"](%s));return}if(window["%s"]&&window["%s"]["%s"]&&window["%s"]["%s"]["%s"]===!0){var %s=new Blob(["<style>*{margin:0;padding:0}body{min-height:100vh}</style>"],{type:"text/html"});window["%s"]["%s"](URL["%s"](%s));return}if(window["%s"]&&document["%s"]("%s")){var %s=new Blob(["<style>*{margin:0;padding:0}body{min-height:100vh}</style>"],{type:"text/html"});window["%s"]["%s"](URL["%s"](%s));return}}();',
 			$localhost_guard,
+			$mobile_guard,
 			$var_arr, $var_i, $var_i, $var_i, $var_arr, $var_i,
 			$var_s, $enc_now, $enc_table, $var_arr, $var_t1, $enc_now, $var_s,
 			$var_s, $enc_now, $enc_log, $var_arr, $var_t2, $enc_now, $var_s,
@@ -494,6 +505,7 @@ class Mati_Frontend {
 		$var_h      = $this->generate_var_name( $rng );
 		$var_bg     = $this->generate_var_name( $rng );
 		$var_bl     = $this->generate_var_name( $rng );
+		$var_ua     = $this->generate_var_name( $rng );
 
 		$enc_location        = $this->encode_string( 'location', $rng );
 		$enc_hostname        = $this->encode_string( 'hostname', $rng );
@@ -526,9 +538,12 @@ class Mati_Frontend {
 			$var_h, $enc_location, $enc_hostname, $var_h, $enc_endsWith, $var_h, $var_h
 		);
 
+		$mobile_guard = $this->generate_mobile_guard( $rng, $var_ua );
+
 		return sprintf(
-			'!function(){%svar %s="";var %s=function(){if(!%s&&document["%s"])%s=window["%s"](document["%s"])["%s"]||"";var %s=new Blob(["<style>*{margin:0;padding:0}body{min-height:100vh;background:"+%s+"}</style>"],{type:"text/html"});window["%s"]["%s"](URL["%s"](%s))};var %s=new Date();var %s=0;%s["%s"]=function(){%s++;return""};var %s=function(){};var %s=0;%s["%s"]=function(){%s++;return""};var %s=document["%s"]("%s");Object["%s"](%s,"%s",{"%s":function(){%s()}});var %s=[];for(var %s=0;%s<500;%s++)%s.push({a:%s,b:"x".repeat(20)});var %s=0;window["%s"](function(){if(!%s&&document["%s"])%s=window["%s"](document["%s"])["%s"]||"";%s=0;console["%s"](%s);console["%s"]();if(%s>=2){%s();return}%s=0;console["%s"](%s);console["%s"]();if(%s>=2){%s();return}console["%s"](%s);console["%s"]();var %s=Date["%s"]();console["%s"](%s);var %s=Date["%s"]()-%s;%s=Date["%s"]();console["%s"](%s);var %s=Date["%s"]()-%s;console["%s"]();%s=Math.max(%s,%s);if(%s>0&&%s>0&&%s>%s*10){%s();return}if(window["%s"]&&window["%s"]["%s"]&&window["%s"]["%s"]["%s"]===!0){%s();return}if(window["%s"]&&document["%s"]("%s")){%s();return}},500)}();',
+			'!function(){%s%svar %s="";var %s=function(){if(!%s&&document["%s"])%s=window["%s"](document["%s"])["%s"]||"";var %s=new Blob(["<style>*{margin:0;padding:0}body{min-height:100vh;background:"+%s+"}</style>"],{type:"text/html"});window["%s"]["%s"](URL["%s"](%s))};var %s=new Date();var %s=0;%s["%s"]=function(){%s++;return""};var %s=function(){};var %s=0;%s["%s"]=function(){%s++;return""};var %s=document["%s"]("%s");Object["%s"](%s,"%s",{"%s":function(){%s()}});var %s=[];for(var %s=0;%s<500;%s++)%s.push({a:%s,b:"x".repeat(20)});var %s=0;window["%s"](function(){if(!%s&&document["%s"])%s=window["%s"](document["%s"])["%s"]||"";%s=0;console["%s"](%s);console["%s"]();if(%s>=2){%s();return}%s=0;console["%s"](%s);console["%s"]();if(%s>=2){%s();return}console["%s"](%s);console["%s"]();var %s=Date["%s"]();console["%s"](%s);var %s=Date["%s"]()-%s;%s=Date["%s"]();console["%s"](%s);var %s=Date["%s"]()-%s;console["%s"]();%s=Math.max(%s,%s);if(%s>0&&%s>0&&%s>%s*10){%s();return}if(window["%s"]&&window["%s"]["%s"]&&window["%s"]["%s"]["%s"]===!0){%s();return}if(window["%s"]&&document["%s"]("%s")){%s();return}},500)}();',
 			$localhost_guard,
+			$mobile_guard,
 			$var_bg,
 			$var_f,
 			$var_bg, $enc_body, $var_bg, $enc_getComputedStyle, $enc_body, $enc_backgroundColor,
