@@ -300,7 +300,7 @@ class Mati_Frontend {
 		$settings = $this->settings_manager->get_settings();
 		$styles   = array();
 
-		if ( ! empty( $settings['disable_text_selection'] ) ) {
+		if ( $this->should_disable_text_selection( $settings ) ) {
 			$styles[] = 'body { -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }';
 		}
 
@@ -315,6 +315,27 @@ class Mati_Frontend {
 		if ( ! empty( $styles ) ) {
 			echo '<style>' . implode( ' ', $styles ) . '</style>' . "\n";
 		}
+	}
+
+	/**
+	 * テキスト選択禁止を現在のページに適用すべきか判定
+	 *
+	 * カテゴリー未指定時は disable_text_selection の値そのまま（従来動作）。
+	 * 指定ありの場合、ONなら指定カテゴリーを制限から除外し、
+	 * OFFなら指定カテゴリーのみ制限する。
+	 */
+	private function should_disable_text_selection( array $settings ): bool {
+		$enabled      = ! empty( $settings['disable_text_selection'] );
+		$category_ids = array_map( 'intval', (array) ( $settings['text_selection_categories'] ?? array() ) );
+		$category_ids = array_filter( $category_ids );
+
+		if ( empty( $category_ids ) ) {
+			return $enabled;
+		}
+
+		$matches = ( is_singular() && has_category( $category_ids ) ) || is_category( $category_ids );
+
+		return $enabled ? ! $matches : $matches;
 	}
 
 	public function add_protection_scripts(): void {

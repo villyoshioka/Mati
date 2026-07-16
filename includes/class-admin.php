@@ -557,13 +557,56 @@ class Mati_Admin {
 
 						<div class="nau-form-group">
 							<label>
-								<input type="checkbox" name="disable_text_selection" value="1" <?php checked( ! empty( $settings['disable_text_selection'] ) ); ?>>
+								<input type="checkbox" id="mati-disable-text-selection" name="disable_text_selection" value="1" <?php checked( ! empty( $settings['disable_text_selection'] ) ); ?>>
 								テキスト選択禁止
 								<span class="nau-tooltip-wrapper">
 									<span class="nau-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
-									<span class="nau-tooltip-content" role="tooltip">テキストの選択・コピーを無効化します</span>
+									<span class="nau-tooltip-content" role="tooltip">テキストの選択・コピーを無効化します。ONのときチェックしたカテゴリーは制限の対象外、OFFのときチェックしたカテゴリーのみ制限されます</span>
 								</span>
 							</label>
+						</div>
+						<div class="nau-form-group">
+							<label>
+								<span id="mati-text-selection-category-label"><?php echo ! empty( $settings['disable_text_selection'] ) ? '制限から除外するカテゴリー' : '制限するカテゴリー'; ?></span>
+								<span class="nau-tooltip-wrapper">
+									<span class="nau-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+									<span class="nau-tooltip-content" role="tooltip">テキスト選択禁止がONのときはチェックしたカテゴリーを制限から除外し、OFFのときはチェックしたカテゴリーのみ制限します。ON/OFFを切り替えるとチェックはクリアされます</span>
+								</span>
+							</label>
+							<?php
+							$text_selection_categories = get_categories( array( 'hide_empty' => false ) );
+							$selected_category_ids     = array_map( 'intval', (array) ( $settings['text_selection_categories'] ?? array() ) );
+							?>
+							<?php if ( empty( $text_selection_categories ) ) : ?>
+								<p class="description">カテゴリーがありません。</p>
+							<?php else : ?>
+								<?php
+								// 11件目以降は折りたたむ。ただし折りたたみ対象に選択済みがある場合は最初から展開する
+								$visible_limit = 10;
+								$extra_count   = max( 0, count( $text_selection_categories ) - $visible_limit );
+								$has_selected_extra = false;
+								foreach ( array_slice( $text_selection_categories, $visible_limit ) as $extra_category ) {
+									if ( in_array( (int) $extra_category->term_id, $selected_category_ids, true ) ) {
+										$has_selected_extra = true;
+										break;
+									}
+								}
+								$is_collapsed = ( $extra_count > 0 && ! $has_selected_extra );
+								?>
+								<div class="mati-category-checklist<?php echo $is_collapsed ? ' is-collapsed' : ''; ?>">
+									<?php foreach ( $text_selection_categories as $index => $category ) : ?>
+										<label class="mati-category-checklist-item<?php echo $index >= $visible_limit ? ' mati-category-extra' : ''; ?>">
+											<input type="checkbox" class="mati-text-selection-category" name="text_selection_categories[]" value="<?php echo esc_attr( (string) $category->term_id ); ?>" <?php checked( in_array( (int) $category->term_id, $selected_category_ids, true ) ); ?>>
+											<?php echo esc_html( $category->name ); ?>
+										</label>
+									<?php endforeach; ?>
+									<?php if ( $extra_count > 0 ) : ?>
+										<button type="button" class="mati-category-more" data-more-label="残り<?php echo esc_attr( (string) $extra_count ); ?>件を表示" data-less-label="折りたたむ">
+											<?php echo $is_collapsed ? '残り' . esc_html( (string) $extra_count ) . '件を表示' : '折りたたむ'; ?>
+										</button>
+									<?php endif; ?>
+								</div>
+							<?php endif; ?>
 						</div>
 						<div class="nau-form-group">
 							<label>
@@ -788,7 +831,7 @@ class Mati_Admin {
 			return;
 		}
 
-		if ( version_compare( $cp_version, '3.0.0', '>=' ) ) {
+		if ( version_compare( $cp_version, '3.2.0', '>=' ) ) {
 			return;
 		}
 
@@ -796,8 +839,8 @@ class Mati_Admin {
 		<div class="notice notice-warning">
 			<p>
 				<strong>⚠️ CarryPod連携</strong><br>
-				CarryPod 3.0.0以降にアップデートすると、双方向連携機能が有効になります。<br>
-				<small>現在: CarryPod <?php echo esc_html( $cp_version ); ?> → 推奨: CarryPod 3.0.0+</small>
+				CarryPod 3.2.0以降にアップデートすると、双方向連携機能が有効になります。<br>
+				<small>現在: CarryPod <?php echo esc_html( $cp_version ); ?> → 推奨: CarryPod 3.2.0+</small>
 			</p>
 		</div>
 		<?php

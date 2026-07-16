@@ -90,6 +90,7 @@ class Mati_Settings {
 			'add_noindex_meta'           => false,
 
 			'disable_text_selection'     => false,
+			'text_selection_categories'  => array(),
 			'frame_ancestors_domains'    => '',
 
 			'obfuscation_seed'           => '',
@@ -161,6 +162,7 @@ class Mati_Settings {
 		$sanitized['bing_verification']   = $this->sanitize_verification_code( $settings['bing_verification'] ?? '' );
 
 		$sanitized['fediverse_profile_urls'] = $this->sanitize_profile_urls( $settings['fediverse_profile_urls'] ?? array() );
+		$sanitized['text_selection_categories'] = $this->sanitize_category_ids( $settings['text_selection_categories'] ?? array() );
 		$sanitized['bluesky_profile_url'] = $this->sanitize_profile_url( $settings['bluesky_profile_url'] ?? '' );
 		$sanitized['bluesky_did'] = $this->sanitize_bluesky_did( $settings['bluesky_did'] ?? '' );
 		$sanitized['frame_ancestors_domains'] = $this->sanitize_frame_ancestors_domains( $settings['frame_ancestors_domains'] ?? '' );
@@ -233,6 +235,31 @@ class Mati_Settings {
 			if ( ! empty( $sanitized_url ) ) {
 				$sanitized[] = $sanitized_url;
 				$count++;
+			}
+		}
+
+		return $sanitized;
+	}
+
+	/**
+	 * カテゴリーID（term_id）の配列をサニタイズ（最大100個まで）
+	 */
+	private function sanitize_category_ids( array|string $ids ): array {
+		if ( ! is_array( $ids ) ) {
+			return array();
+		}
+
+		$sanitized = array();
+
+		foreach ( $ids as $id ) {
+			if ( count( $sanitized ) >= 100 ) {
+				break;
+			}
+
+			$id = absint( $id );
+
+			if ( $id > 0 && ! in_array( $id, $sanitized, true ) ) {
+				$sanitized[] = $id;
 			}
 		}
 

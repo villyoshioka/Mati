@@ -231,6 +231,26 @@
 		});
 
 		// ========================================
+		// テキスト選択禁止: トグル切替時の処理
+		// ON/OFFでチェックの意味が反転するため、チェックをクリアし項目名も切り替える
+		// ========================================
+
+		$('#mati-disable-text-selection').on('change', function() {
+			$('.mati-text-selection-category').prop('checked', false);
+			$('#mati-text-selection-category-label').text(
+				$(this).prop('checked') ? '制限から除外するカテゴリー' : '制限するカテゴリー'
+			);
+		});
+
+		// カテゴリー一覧の折りたたみ（11件目以降の表示/非表示）
+		$('.mati-category-more').on('click', function() {
+			const $button = $(this);
+			const $checklist = $button.closest('.mati-category-checklist');
+			const collapsed = $checklist.toggleClass('is-collapsed').hasClass('is-collapsed');
+			$button.text(collapsed ? $button.data('more-label') : $button.data('less-label'));
+		});
+
+		// ========================================
 		// 入力フィールドでのEnterキーによるフォーム送信を防止
 		// ========================================
 
@@ -259,7 +279,19 @@
 			const formData = {};
 			$form.find('input[type="checkbox"]').each(function() {
 				const $checkbox = $(this);
-				formData[$checkbox.attr('name')] = $checkbox.prop('checked') ? '1' : '';
+				const name = $checkbox.attr('name');
+
+				if (name && name.endsWith('[]')) {
+					const arrayKey = name.replace('[]', '');
+					if (!formData[arrayKey]) {
+						formData[arrayKey] = [];
+					}
+					if ($checkbox.prop('checked')) {
+						formData[arrayKey].push($checkbox.val());
+					}
+				} else {
+					formData[name] = $checkbox.prop('checked') ? '1' : '';
+				}
 			});
 			$form.find('input[type="text"], input[type="url"], input[type="hidden"]').each(function() {
 				const $input = $(this);

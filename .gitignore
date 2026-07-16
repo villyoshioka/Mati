@@ -57,6 +57,11 @@ composer.lock
 
 # Claude Code
 .claude/
+CLAUDE.md
+AGENTS.md
+
+# Kilo
+.kilo/
 
 # Internal documentation
 VERSIONING.md
