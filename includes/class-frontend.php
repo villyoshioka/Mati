@@ -305,7 +305,7 @@ class Mati_Frontend {
 		}
 
 		if ( ! empty( $settings['disable_image_drag'] ) ) {
-			$styles[] = 'img { -webkit-user-drag: none !important; -moz-user-drag: none !important; -ms-user-drag: none !important; user-drag: none !important; -webkit-user-select: none !important; -moz-user-select: none !important; -ms-user-select: none !important; user-select: none !important; }';
+			$styles[] = 'img { -webkit-user-drag: none !important; -moz-user-drag: none !important; -ms-user-drag: none !important; user-drag: none !important; -webkit-user-select: none !important; -moz-user-select: none !important; -ms-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; }';
 		}
 
 		if ( ! empty( $settings['disable_print'] ) ) {
@@ -440,6 +440,17 @@ class Mati_Frontend {
 				$var_name,
 				$var_name, $enc_target, $enc_tagName,
 				$var_name, $enc_preventDefault
+			);
+
+			// モバイル長押し対策: 長押しで発火する contextmenu を画像に限定して抑止する
+			$var_cm = $this->generate_var_name( $rng );
+
+			$scripts[] = sprintf(
+				'document["%s"]("context"+"menu",function(%s){if(%s["%s"]["%s"]==="IMG"){%s["%s"]();return!1}},!0);',
+				$enc_addEventListener,
+				$var_cm,
+				$var_cm, $enc_target, $enc_tagName,
+				$var_cm, $enc_preventDefault
 			);
 		}
 
