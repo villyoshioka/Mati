@@ -459,26 +459,82 @@ class Mati_Frontend {
 		}
 	}
 
-	private function generate_mobile_guard( int &$rng, string $var_ua ): string {
+	/**
+	 * 「実機モバイルである」フラグを宣言する。
+	 *
+	 * 実機モバイルでは検出処理が誤検知しやすいため、このフラグが真のときは
+	 * mobile debugger (eruda / vConsole) の検出だけを残して他を抑止する。
+	 *
+	 * ただし UA とタッチ有無だけで判定すると、デスクトップの端末エミュレーションを
+	 * 挟むだけで保護を無効化できてしまう。そこで「モバイル UA を名乗っているが
+	 * 実体はデスクトップブラウザ」と分かる矛盾を検出した場合はフラグを立てない。
+	 *
+	 * - navigator.userAgentData.mobile === false: Chromium がモバイル UA を
+	 *   名乗りつつクライアントヒントではデスクトップと申告している状態。
+	 * - iOS 系 UA なのに navigator.vendor が Apple 以外: 実機 iOS は WebKit のみで
+	 *   vendor は必ず "Apple Computer, Inc." になるため、Blink が iPhone/iPad を
+	 *   偽装している状態と判断できる。
+	 * - Android UA なのに navigator.platform が Win/Mac: 実機 Android は
+	 *   "Linux armv8l" 等を返すため、デスクトップ実体と判断できる。
+	 *
+	 * これらの矛盾検出はあくまで補助であり、UA を偽装しないレスポンシブ表示などは
+	 * 素通りする。UA に依存しない検出は generate_debugger_check() が担う。
+	 */
+	private function generate_mobile_guard( int &$rng, string $var_mob ): string {
+		$var_u  = $this->generate_var_name( $rng );
+		$var_ch = $this->generate_var_name( $rng );
+		$var_pf = $this->generate_var_name( $rng );
+
 		return sprintf(
-			'var %s=navigator.userAgent||"";if(/iPhone|iPad|iPod|Android/.test(%s)&&("ontouchstart" in window))return;',
-			$var_ua, $var_ua
+			'var %s=function(){var %s=navigator.userAgent||"";if(!/iPhone|iPad|iPod|Android/.test(%s))return!1;if(!("ontouchstart" in window))return!1;var %s=navigator["userAgentData"];if(%s&&%s["mobile"]===!1)return!1;if(/iPhone|iPad|iPod/.test(%s)&&(navigator["vendor"]||"")!=="Apple Computer, Inc.")return!1;var %s=navigator["platform"]||"";if(/Android/.test(%s)&&/^(Win|Mac)/.test(%s))return!1;return!0}();',
+			$var_mob, $var_u, $var_u, $var_ch, $var_ch, $var_ch, $var_u, $var_pf, $var_u, $var_pf
+		);
+	}
+
+	/**
+	 * debugger 文の停止時間による DevTools 接続検出を生成する。
+	 *
+	 * DevTools が接続されている場合のみ debugger 文で実行が停止するため、
+	 * 前後の経過時間が閾値を超えたら接続中と判断する。
+	 *
+	 * UA・タッチ有無・表示中のパネル種別のいずれにも依存しないため、
+	 * 端末エミュレーションやレスポンシブ表示を挟んでも回避できない。
+	 * DevTools 非接続時は debugger 文が no-op となり経過時間はほぼ 0 になるので、
+	 * 実機モバイルを含む通常の閲覧では発火しない。
+	 *
+	 * @param string $var_block ブロック処理を行う関数の変数名
+	 */
+	private function generate_debugger_check( int &$rng, string $var_block ): string {
+		$var_t = $this->generate_var_name( $rng );
+
+		$enc_now = $this->encode_string( 'now', $rng );
+
+		return sprintf(
+			'var %s=Date["%s"]();debugger;if(Date["%s"]()-%s>100){%s();return}',
+			$var_t, $enc_now, $enc_now, $var_t, $var_block
 		);
 	}
 
 	private function generate_devtools_immediate_check( int &$rng, bool $force = false ): string {
 		$var_h   = $this->generate_var_name( $rng );
-		$var_ua  = $this->generate_var_name( $rng );
+		$var_mob = $this->generate_var_name( $rng );
 		$var_arr = $this->generate_var_name( $rng );
 		$var_i   = $this->generate_var_name( $rng );
 		$var_s   = $this->generate_var_name( $rng );
 		$var_t1  = $this->generate_var_name( $rng );
 		$var_t2  = $this->generate_var_name( $rng );
 		$var_bl  = $this->generate_var_name( $rng );
+		$var_div = $this->generate_var_name( $rng );
+		$var_b   = $this->generate_var_name( $rng );
 
 		$enc_location       = $this->encode_string( 'location', $rng );
 		$enc_hostname       = $this->encode_string( 'hostname', $rng );
 		$enc_endsWith       = $this->encode_string( 'endsWith', $rng );
+		$enc_createElement  = $this->encode_string( 'createElement', $rng );
+		$enc_div            = $this->encode_string( 'div', $rng );
+		$enc_defineProperty = $this->encode_string( 'defineProperty', $rng );
+		$enc_id             = $this->encode_string( 'id', $rng );
+		$enc_get            = $this->encode_string( 'get', $rng );
 		$enc_now            = $this->encode_string( 'now', $rng );
 		$enc_table          = $this->encode_string( 'table', $rng );
 		$enc_log            = $this->encode_string( 'log', $rng );
@@ -497,22 +553,42 @@ class Mati_Frontend {
 			$var_h, $enc_location, $enc_hostname, $var_h, $enc_endsWith, $var_h, $var_h
 		);
 
-		$mobile_guard = $this->generate_mobile_guard( $rng, $var_ua );
+		$mobile_guard   = $this->generate_mobile_guard( $rng, $var_mob );
+		$debugger_check = $this->generate_debugger_check( $rng, $var_b );
 
 		return sprintf(
-			'!function(){%s%svar %s=[];for(var %s=0;%s<500;%s++)%s.push({a:%s,b:"x".repeat(20)});var %s=Date["%s"]();console["%s"](%s);var %s=Date["%s"]()-%s;%s=Date["%s"]();console["%s"](%s);var %s=Date["%s"]()-%s;console["%s"]();if(%s>0&&%s>0&&%s>%s*10){var %s=new Blob(["<style>*{margin:0;padding:0}body{min-height:100vh}</style>"],{type:"text/html"});window["%s"]["%s"](URL["%s"](%s));return}if(window["%s"]&&window["%s"]["%s"]&&window["%s"]["%s"]["%s"]===!0){var %s=new Blob(["<style>*{margin:0;padding:0}body{min-height:100vh}</style>"],{type:"text/html"});window["%s"]["%s"](URL["%s"](%s));return}if(window["%s"]&&document["%s"]("%s")){var %s=new Blob(["<style>*{margin:0;padding:0}body{min-height:100vh}</style>"],{type:"text/html"});window["%s"]["%s"](URL["%s"](%s));return}}();',
+			'!function(){%s%s'
+			// ブロック処理は共通の関数にまとめる。getter トラップは console の描画が
+			// 非同期に走ってから発火するため、フラグを同期的に読むのではなく
+			// 発火時点でこの関数を直接呼ばせる必要がある。
+			. 'var %s=function(){var %s=new Blob(["<style>*{margin:0;padding:0}body{min-height:100vh}</style>"],{type:"text/html"});window["%s"]["%s"](URL["%s"](%s))};'
+			// 実機モバイルは描画トラップ・タイミング判定ともに誤検知するため実行しない。
+			// 代わりに debugger 検出を使う。実機では DevTools 非接続で no-op となり
+			// 停止が発生しないので、端末エミュレーション／レスポンシブ表示のみを捕捉できる。
+			. 'if(!%s){'
+			. 'var %s=document["%s"]("%s");Object["%s"](%s,"%s",{"%s":function(){%s()}});console["%s"](%s);console["%s"]();'
+			. 'var %s=[];for(var %s=0;%s<500;%s++)%s.push({a:%s,b:"x".repeat(20)});'
+			. 'var %s=Date["%s"]();console["%s"](%s);var %s=Date["%s"]()-%s;'
+			. '%s=Date["%s"]();console["%s"](%s);var %s=Date["%s"]()-%s;console["%s"]();'
+			. 'if(%s>0&&%s>0&&%s>%s*10){%s();return}'
+			. '}else{%s}'
+			. 'if(window["%s"]&&window["%s"]["%s"]&&window["%s"]["%s"]["%s"]===!0){%s();return}'
+			. 'if(window["%s"]&&document["%s"]("%s")){%s();return}'
+			. '}();',
 			$localhost_guard,
 			$mobile_guard,
+			$var_b, $var_bl, $enc_location, $enc_replace, $enc_createObjectURL, $var_bl,
+			$var_mob,
+			$var_div, $enc_createElement, $enc_div,
+			$enc_defineProperty, $var_div, $enc_id, $enc_get, $var_b,
+			$enc_log, $var_div, $enc_clear,
 			$var_arr, $var_i, $var_i, $var_i, $var_arr, $var_i,
 			$var_s, $enc_now, $enc_table, $var_arr, $var_t1, $enc_now, $var_s,
-			$var_s, $enc_now, $enc_log, $var_arr, $var_t2, $enc_now, $var_s,
-			$enc_clear,
-			$var_t1, $var_t2, $var_t1, $var_t2,
-			$var_bl, $enc_location, $enc_replace, $enc_createObjectURL, $var_bl,
-			$enc_eruda, $enc_eruda, $enc_devTools, $enc_eruda, $enc_devTools, $enc_isShow,
-			$var_bl, $enc_location, $enc_replace, $enc_createObjectURL, $var_bl,
-			$enc_vcOrig, $enc_querySelector, $enc_vcSelector,
-			$var_bl, $enc_location, $enc_replace, $enc_createObjectURL, $var_bl
+			$var_s, $enc_now, $enc_log, $var_arr, $var_t2, $enc_now, $var_s, $enc_clear,
+			$var_t1, $var_t2, $var_t1, $var_t2, $var_b,
+			$debugger_check,
+			$enc_eruda, $enc_eruda, $enc_devTools, $enc_eruda, $enc_devTools, $enc_isShow, $var_b,
+			$enc_vcOrig, $enc_querySelector, $enc_vcSelector, $var_b
 		);
 	}
 
@@ -529,7 +605,6 @@ class Mati_Frontend {
 		$var_c2     = $this->generate_var_name( $rng );
 		$var_div    = $this->generate_var_name( $rng );
 		$var_arr    = $this->generate_var_name( $rng );
-		$var_mx     = $this->generate_var_name( $rng );
 		$var_t1     = $this->generate_var_name( $rng );
 		$var_t2     = $this->generate_var_name( $rng );
 		$var_s      = $this->generate_var_name( $rng );
@@ -570,10 +645,11 @@ class Mati_Frontend {
 			$var_h, $enc_location, $enc_hostname, $var_h, $enc_endsWith, $var_h, $var_h
 		);
 
-		$mobile_guard = $this->generate_mobile_guard( $rng, $var_ua );
+		$mobile_guard   = $this->generate_mobile_guard( $rng, $var_ua );
+		$debugger_check = $this->generate_debugger_check( $rng, $var_f );
 
 		return sprintf(
-			'!function(){%s%svar %s="";var %s=function(){if(!%s&&document["%s"])%s=window["%s"](document["%s"])["%s"]||"";var %s=new Blob(["<style>*{margin:0;padding:0}body{min-height:100vh;background:"+%s+"}</style>"],{type:"text/html"});window["%s"]["%s"](URL["%s"](%s))};var %s=new Date();var %s=0;%s["%s"]=function(){%s++;return""};var %s=function(){};var %s=0;%s["%s"]=function(){%s++;return""};var %s=document["%s"]("%s");Object["%s"](%s,"%s",{"%s":function(){%s()}});var %s=[];for(var %s=0;%s<500;%s++)%s.push({a:%s,b:"x".repeat(20)});var %s=0;window["%s"](function(){if(!%s&&document["%s"])%s=window["%s"](document["%s"])["%s"]||"";%s=0;console["%s"](%s);console["%s"]();if(%s>=2){%s();return}%s=0;console["%s"](%s);console["%s"]();if(%s>=2){%s();return}console["%s"](%s);console["%s"]();var %s=Date["%s"]();console["%s"](%s);var %s=Date["%s"]()-%s;%s=Date["%s"]();console["%s"](%s);var %s=Date["%s"]()-%s;console["%s"]();%s=Math.max(%s,%s);if(%s>0&&%s>0&&%s>%s*10){%s();return}if(window["%s"]&&window["%s"]["%s"]&&window["%s"]["%s"]["%s"]===!0){%s();return}if(window["%s"]&&document["%s"]("%s")){%s();return}},500)}();',
+			'!function(){%s%svar %s="";var %s=function(){if(!%s&&document["%s"])%s=window["%s"](document["%s"])["%s"]||"";var %s=new Blob(["<style>*{margin:0;padding:0}body{min-height:100vh;background:"+%s+"}</style>"],{type:"text/html"});window["%s"]["%s"](URL["%s"](%s))};var %s=new Date();var %s=0;%s["%s"]=function(){%s++;return""};var %s=function(){};var %s=0;%s["%s"]=function(){%s++;return""};var %s=document["%s"]("%s");Object["%s"](%s,"%s",{"%s":function(){%s()}});var %s=[];if(!%s)for(var %s=0;%s<500;%s++)%s.push({a:%s,b:"x".repeat(20)});window["%s"](function(){if(!%s&&document["%s"])%s=window["%s"](document["%s"])["%s"]||"";if(!%s){%s=0;console["%s"](%s);console["%s"]();if(%s>=2){%s();return}%s=0;console["%s"](%s);console["%s"]();if(%s>=2){%s();return}console["%s"](%s);console["%s"]();var %s=Date["%s"]();console["%s"](%s);var %s=Date["%s"]()-%s;%s=Date["%s"]();console["%s"](%s);var %s=Date["%s"]()-%s;console["%s"]();if(%s>0&&%s>0&&%s>%s*10){%s();return}}else{%s}if(window["%s"]&&window["%s"]["%s"]&&window["%s"]["%s"]["%s"]===!0){%s();return}if(window["%s"]&&document["%s"]("%s")){%s();return}},500)}();',
 			$localhost_guard,
 			$mobile_guard,
 			$var_bg,
@@ -586,17 +662,18 @@ class Mati_Frontend {
 			$var_fn, $enc_toString, $var_c2,
 			$var_div, $enc_createElement, $enc_div,
 			$enc_defineProperty, $var_div, $enc_id, $enc_get, $var_f,
-			$var_arr, $var_i, $var_i, $var_i, $var_arr, $var_i,
-			$var_mx,
+			$var_arr, $var_ua, $var_i, $var_i, $var_i, $var_arr, $var_i,
 			$enc_setInterval,
 			$var_bg, $enc_body, $var_bg, $enc_getComputedStyle, $enc_body, $enc_backgroundColor,
+			$var_ua,
 			$var_c, $enc_log, $var_d, $enc_clear, $var_c, $var_f,
 			$var_c2, $enc_log, $var_fn, $enc_clear, $var_c2, $var_f,
 			$enc_log, $var_div, $enc_clear,
 			$var_s, $enc_now, $enc_table, $var_arr, $var_t1, $enc_now, $var_s,
 			$var_s, $enc_now, $enc_log, $var_arr, $var_t2, $enc_now, $var_s,
-			$enc_clear, $var_mx, $var_mx, $var_t2,
-			$var_t1, $var_mx, $var_t1, $var_mx, $var_f,
+			$enc_clear,
+			$var_t1, $var_t2, $var_t1, $var_t2, $var_f,
+			$debugger_check,
 			$enc_eruda, $enc_eruda, $enc_devTools, $enc_eruda, $enc_devTools, $enc_isShow, $var_f,
 			$enc_vcOrig, $enc_querySelector, $enc_vcSelector, $var_f
 		);
