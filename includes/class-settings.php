@@ -87,6 +87,7 @@ class Mati_Settings {
 			'bluesky_profile_url'        => '',
 			'bluesky_did'                => '',
 			'enable_jsonld'              => true,
+			'enable_meta_description'    => true,
 			'add_noindex_meta'           => false,
 
 			'disable_text_selection'     => false,
@@ -150,6 +151,7 @@ class Mati_Settings {
 			'add_noimageindex_meta',
 			'add_noai_meta',
 			'enable_jsonld',
+			'enable_meta_description',
 			'add_noindex_meta',
 		);
 

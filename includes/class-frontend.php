@@ -21,6 +21,10 @@ class Mati_Frontend {
 
 	private Mati_Settings $settings_manager;
 
+	private ?string $meta_description_tag = null;
+
+	private bool $meta_description_filtered = false;
+
 	public static function get_instance(): static {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
@@ -34,6 +38,9 @@ class Mati_Frontend {
 		$this->init_meta_removal_hooks();
 
 		add_action( 'wp_head', array( $this, 'add_seo_meta_tags' ), 1 );
+
+		// 最後に開始した（最も内側の）バッファにして、キャッシュ系より先に処理する
+		add_action( 'template_redirect', array( $this, 'start_meta_description_buffer' ), PHP_INT_MAX );
 
 		add_action( 'init', array( $this, 'handle_atproto_did_request' ) );
 
@@ -162,6 +169,11 @@ class Mati_Frontend {
 	public function add_seo_meta_tags(): void {
 		$settings = $this->settings_manager->get_settings();
 
+		if ( ! empty( $settings['enable_meta_description'] ) ) {
+			$this->meta_description_tag = '<meta name="description" content="' . esc_attr( $this->get_meta_description() ) . '">';
+			echo $this->meta_description_tag . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above
+		}
+
 		if ( ! empty( $settings['google_analytics_id'] ) ) {
 			$ga_id = esc_attr( $settings['google_analytics_id'] );
 			echo '<script async src="https://www.googletagmanager.com/gtag/js?id=' . $ga_id . '"></script>' . "\n";
@@ -210,6 +222,97 @@ class Mati_Frontend {
 		if ( ! empty( $settings['enable_jsonld'] ) ) {
 			$this->output_jsonld();
 		}
+	}
+
+	/**
+	 * 現在のページのメタディスクリプションを決定（空文字は返さない）
+	 *
+	 * 訪問者の入力値（検索語など）は使わない。
+	 */
+	private function get_meta_description(): string {
+		$candidates = array();
+		$queried    = get_queried_object();
+
+		if ( is_front_page() ) {
+			// キャッチフレーズ（下のフォールバック）を使う
+		} elseif ( is_singular() && $queried instanceof WP_Post ) {
+			// パスワード保護記事は本文・抜粋を出さない
+			if ( '' === $queried->post_password ) {
+				$candidates[] = $queried->post_excerpt;
+				$candidates[] = $queried->post_content;
+			}
+			$candidates[] = $queried->post_title;
+		} elseif ( ( is_category() || is_tag() || is_tax() ) && $queried instanceof WP_Term ) {
+			$candidates[] = $queried->description;
+		}
+
+		$candidates[] = get_bloginfo( 'description' );
+		$candidates[] = get_bloginfo( 'name' );
+
+		foreach ( $candidates as $text ) {
+			$text = $this->clean_meta_description( (string) $text );
+			if ( '' !== $text ) {
+				return $text;
+			}
+		}
+
+		return '';
+	}
+
+	private function clean_meta_description( string $text ): string {
+		$text = wp_strip_all_tags( strip_shortcodes( $text ), true );
+		// 切り詰めで実体参照が壊れないようデコードしておく（出力時に esc_attr で再エスケープ）
+		$text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$text = trim( preg_replace( '/\s+/u', ' ', $text ) ?? '' );
+
+		if ( mb_strlen( $text ) > 120 ) {
+			$text = mb_substr( $text, 0, 120 ) . '…';
+		}
+
+		return $text;
+	}
+
+	public function start_meta_description_buffer(): void {
+		$settings = $this->settings_manager->get_settings();
+
+		if ( ! empty( $settings['enable_meta_description'] ) ) {
+			ob_start( array( $this, 'filter_meta_description_buffer' ) );
+		}
+	}
+
+	/**
+	 * head 内の他の description を除去し、Mati のタグを1つだけ残す
+	 */
+	public function filter_meta_description_buffer( string $html ): string {
+		if ( $this->meta_description_filtered || null === $this->meta_description_tag ) {
+			return $html;
+		}
+
+		$head_end = stripos( $html, '</head>' );
+		if ( false === $head_end ) {
+			return $html;
+		}
+
+		$this->meta_description_filtered = true;
+
+		$kept = false;
+		$head = preg_replace_callback(
+			'/<meta\s(?:[^>]*\s)?name\s*=\s*(?:"description"|\'description\'|description(?=[\s\/>]))[^>]*>\n?/i',
+			function ( array $m ) use ( &$kept ): string {
+				if ( ! $kept && rtrim( $m[0] ) === $this->meta_description_tag ) {
+					$kept = true;
+					return $m[0];
+				}
+				return '';
+			},
+			substr( $html, 0, $head_end )
+		);
+
+		if ( null === $head ) {
+			return $html;
+		}
+
+		return $head . substr( $html, $head_end );
 	}
 
 	private function output_jsonld(): void {

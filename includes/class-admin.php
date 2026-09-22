@@ -459,6 +459,17 @@ class Mati_Admin {
 
 						<div class="nau-form-group">
 							<label>
+								<input type="checkbox" name="enable_meta_description" value="1" <?php checked( ! empty( $settings['enable_meta_description'] ) ); ?>>
+								メタディスクリプションを出力
+								<span class="nau-tooltip-wrapper">
+									<span class="nau-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+									<span class="nau-tooltip-content" role="tooltip">記事の抜粋・本文やサイトのキャッチフレーズから説明文を自動生成します。<br>テーマや他のプラグインが出力する説明文より優先されます</span>
+								</span>
+							</label>
+						</div>
+
+						<div class="nau-form-group">
+							<label>
 								<input type="checkbox" name="add_noindex_meta" value="1" <?php checked( ! empty( $settings['add_noindex_meta'] ) ); ?>>
 								検索エンジンのインデックスを拒否
 								<span class="nau-tooltip-wrapper">
