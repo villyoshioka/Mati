@@ -239,10 +239,6 @@
 			$('#mati-tdm-policy-group').toggle($(this).prop('checked'));
 		});
 
-		$('#mati-robots-header-media-only').on('change', function() {
-			$('#mati-tdm-follow-group').toggle($(this).prop('checked'));
-		});
-
 		// ========================================
 		// テキスト選択禁止: トグル切替時の処理
 		// ON/OFFでチェックの意味が反転するため、チェックをクリアし項目名も切り替える
@@ -318,6 +314,12 @@
 					formData[arrayKey].push($input.val());
 				} else {
 					formData[name] = $input.val();
+				}
+			});
+			$form.find('select').each(function() {
+				const name = $(this).attr('name');
+				if (name) {
+					formData[name] = $(this).val();
 				}
 			});
 			$form.find("textarea").each(function() {

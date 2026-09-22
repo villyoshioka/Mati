@@ -8,5 +8,6 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 }
 
 delete_option( 'mati_settings' );
+delete_option( 'mati_media_guide_hidden' );
 delete_transient( 'mati_force_protection' );
 wp_cache_flush();

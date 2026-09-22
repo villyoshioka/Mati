@@ -305,25 +305,25 @@ class Mati_Admin {
 								</label>
 								<input type="url" name="tdm_policy_url" class="regular-text" placeholder="例: https://example.com/tdm-policy" value="<?php echo esc_attr( $settings['tdm_policy_url'] ?? '' ); ?>">
 							</div>
+							<?php
+							$header_scope = 'all';
+							if ( ! empty( $settings['robots_header_media_only'] ) ) {
+								$header_scope = empty( $settings['tdm_follow_media_only'] ) ? 'robots_media' : 'media';
+							}
+							?>
 							<div class="nau-form-group">
-								<label>
-									<input type="checkbox" id="mati-robots-header-media-only" name="robots_header_media_only" value="1" <?php checked( ! empty( $settings['robots_header_media_only'] ) ); ?>>
-									X-Robots-Tag をメディアファイルのみに適用
+								<label for="mati-header-scope">
+									ヘッダーの適用範囲
 									<span class="nau-tooltip-wrapper">
 										<span class="nau-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
-										<span class="nau-tooltip-content" role="tooltip">OFFのときはページとメディアファイルの両方に、ONのときはメディアファイル（アップロードフォルダ内のファイル）のみに付けます。<br>ページ内のメタタグは常に出力されます</span>
+										<span class="nau-tooltip-content" role="tooltip">X-Robots-Tag と TDMRep を、ページとメディアファイル（アップロードフォルダ内のファイル）のどちらに付けるかを選びます。<br>ページ内のメタタグは常に出力されます</span>
 									</span>
 								</label>
-							</div>
-							<div class="nau-form-group" id="mati-tdm-follow-group" <?php echo empty( $settings['robots_header_media_only'] ) ? 'style="display:none;"' : ''; ?>>
-								<label>
-									<input type="checkbox" name="tdm_follow_media_only" value="1" <?php checked( ! empty( $settings['tdm_follow_media_only'] ) ); ?>>
-									TDMRep をメディアファイルのみに適用
-									<span class="nau-tooltip-wrapper">
-										<span class="nau-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
-										<span class="nau-tooltip-content" role="tooltip">ONのときはメディアファイルのみに、OFFのときはページとメディアファイルの両方に付けます</span>
-									</span>
-								</label>
+								<select id="mati-header-scope" name="header_scope">
+									<option value="all" <?php selected( $header_scope, 'all' ); ?>>ページとメディアファイルの両方</option>
+									<option value="robots_media" <?php selected( $header_scope, 'robots_media' ); ?>>X-Robots-Tag のみメディアファイルに限定</option>
+									<option value="media" <?php selected( $header_scope, 'media' ); ?>>両方ともメディアファイルに限定</option>
+								</select>
 							</div>
 						</div>
 
@@ -708,6 +708,10 @@ class Mati_Admin {
 		$settings_manager = Mati_Settings::get_instance();
 		$new_settings     = $_POST['settings'] ?? array();
 
+		// 保存前の設定で表示されていた案内を非表示にする（内容が変わると再表示される）
+		$hidden_guide = empty( $new_settings['hide_media_header_guide'] ) ? null : $this->build_media_header_guide( $settings_manager->get_header_sets()['media'] );
+		unset( $new_settings['hide_media_header_guide'] );
+
 		$bluesky_clear = ! empty( $new_settings['bluesky_clear'] );
 		$bluesky_url   = isset( $new_settings['bluesky_profile_url'] ) ? sanitize_text_field( $new_settings['bluesky_profile_url'] ) : '';
 		unset( $new_settings['bluesky_clear'] );
@@ -730,6 +734,10 @@ class Mati_Admin {
 		}
 
 		$result = $settings_manager->save_settings( $new_settings );
+
+		if ( $result && null !== $hidden_guide ) {
+			update_option( 'mati_media_guide_hidden', $hidden_guide['hash'], false );
+		}
 
 		if ( $result ) {
 			wp_send_json_success( array( 'message' => '設定を保存しました。' ) );
@@ -869,16 +877,21 @@ class Mati_Admin {
 	 * @param array<string, string> $media_headers
 	 */
 	private function render_media_header_guide( array $media_headers ): void {
-		if ( empty( $media_headers ) ) {
+		$guide = $this->build_media_header_guide( $media_headers );
+		if ( null === $guide ) {
 			return;
 		}
 
-		$apache_lines = Mati_Htaccess::build_lines( $media_headers );
-		$nginx        = Mati_Htaccess::build_nginx_snippet( $media_headers );
-
-		if ( null === $apache_lines || '' === $nginx ) {
+		$hidden_hash = get_option( 'mati_media_guide_hidden' );
+		if ( $hidden_hash === $guide['hash'] ) {
 			return;
 		}
+		// 内容が変わって再表示したら非表示の記録を消す（内容が元に戻っても、再度非表示にするまで表示し続ける）
+		if ( false !== $hidden_hash ) {
+			delete_option( 'mati_media_guide_hidden' );
+		}
+
+		[ 'apache_lines' => $apache_lines, 'nginx' => $nginx ] = $guide;
 		?>
 		<div class="nau-accordion-section nau-accordion-section--warning" data-section="media-header-guide">
 			<button type="button" class="nau-accordion-header"
@@ -899,10 +912,43 @@ class Mati_Admin {
 					<textarea class="large-text code" rows="<?php echo esc_attr( (string) count( $apache_lines ) ); ?>" readonly><?php echo esc_textarea( implode( "\n", $apache_lines ) ); ?></textarea>
 					<h4>Nginx（server ブロック内）</h4>
 					<textarea class="large-text code" rows="<?php echo esc_attr( (string) ( count( $media_headers ) + 2 ) ); ?>" readonly><?php echo esc_textarea( $nginx ); ?></textarea>
+					<p>
+						<label>
+							<input type="checkbox" name="hide_media_header_guide" value="1">
+							非表示にする
+						</label>
+					</p>
 				</div>
 			</div>
 		</div>
 		<?php
+	}
+
+	/**
+	 * メディアファイル用ヘッダーのサーバー設定案内の内容
+	 *
+	 * hash は案内の内容が変わったかどうかの判定に使う（非表示にした時点の内容と比較）。
+	 *
+	 * @param array<string, string> $media_headers
+	 * @return array{apache_lines: string[], nginx: string, hash: string}|null 案内が不要なら null
+	 */
+	private function build_media_header_guide( array $media_headers ): ?array {
+		if ( empty( $media_headers ) ) {
+			return null;
+		}
+
+		$apache_lines = Mati_Htaccess::build_lines( $media_headers );
+		$nginx        = Mati_Htaccess::build_nginx_snippet( $media_headers );
+
+		if ( null === $apache_lines || '' === $nginx ) {
+			return null;
+		}
+
+		return array(
+			'apache_lines' => $apache_lines,
+			'nginx'        => $nginx,
+			'hash'         => md5( implode( "\n", $apache_lines ) . "\n" . $nginx ),
+		);
 	}
 
 	public function check_carry_pod_compatibility(): void {

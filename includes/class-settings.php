@@ -134,6 +134,14 @@ class Mati_Settings {
 	private function sanitize_settings( array $settings ): array {
 		$sanitized = array();
 
+		// 管理画面のセレクト（header_scope）を保存形式の2つのフラグに展開。想定外の値は初期値扱い
+		if ( isset( $settings['header_scope'] ) ) {
+			$scope = in_array( $settings['header_scope'], array( 'all', 'robots_media', 'media' ), true ) ? $settings['header_scope'] : 'all';
+
+			$settings['robots_header_media_only'] = 'all' !== $scope;
+			$settings['tdm_follow_media_only']    = 'media' === $scope;
+		}
+
 		$checkbox_keys = array(
 			'meta_removal_enabled',
 			'remove_generator',
