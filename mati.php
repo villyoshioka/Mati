@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Mati
- * Version: 2.3.0
+ * Version: 2.3.1
  * Description: コンテンツ保護・メタタグ管理・SEO設定を簡単に制御できるWordPressプラグイン。
  * Requires at least: 7.0
  * Tested up to: 7.1
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'MATI_VERSION', '2.3.0' );
+define( 'MATI_VERSION', '2.3.1' );
 define( 'MATI_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MATI_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'MATI_PLUGIN_FILE', __FILE__ );
@@ -41,6 +41,7 @@ class Mati {
 	}
 
 	private function load_dependencies(): void {
+		require_once MATI_PLUGIN_DIR . 'includes/class-htaccess.php';
 		require_once MATI_PLUGIN_DIR . 'includes/class-settings.php';
 		require_once MATI_PLUGIN_DIR . 'includes/class-admin.php';
 		require_once MATI_PLUGIN_DIR . 'includes/class-frontend.php';

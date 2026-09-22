@@ -120,28 +120,7 @@ class Mati_Frontend {
 	public function add_security_headers( array $headers ): array {
 		$settings = $this->settings_manager->get_settings();
 
-		$robots_directives = array();
-
-		if ( ! empty( $settings['add_noindex_meta'] ) ) {
-			$robots_directives[] = 'noindex';
-		}
-
-		if ( ! empty( $settings['add_noarchive_meta'] ) ) {
-			$robots_directives[] = 'noarchive';
-		}
-
-		if ( ! empty( $settings['add_noimageindex_meta'] ) ) {
-			$robots_directives[] = 'noimageindex';
-		}
-
-		if ( ! empty( $settings['add_noai_meta'] ) ) {
-			$robots_directives[] = 'noai';
-			$robots_directives[] = 'noimageai';
-		}
-
-		if ( ! empty( $robots_directives ) ) {
-			$headers['X-Robots-Tag'] = implode( ', ', $robots_directives );
-		}
+		$headers = array_merge( $headers, $this->settings_manager->get_header_sets( $settings )['page'] );
 
 		$frame_ancestors = "'self'";
 		$custom_domains  = $settings['frame_ancestors_domains'] ?? '';
@@ -196,24 +175,7 @@ class Mati_Frontend {
 			}
 		}
 
-		$robots_directives = array();
-
-		if ( ! empty( $settings['add_noindex_meta'] ) ) {
-			$robots_directives[] = 'noindex';
-		}
-
-		if ( ! empty( $settings['add_noarchive_meta'] ) ) {
-			$robots_directives[] = 'noarchive';
-		}
-
-		if ( ! empty( $settings['add_noimageindex_meta'] ) ) {
-			$robots_directives[] = 'noimageindex';
-		}
-
-		if ( ! empty( $settings['add_noai_meta'] ) ) {
-			$robots_directives[] = 'noai';
-			$robots_directives[] = 'noimageai';
-		}
+		$robots_directives = $this->settings_manager->get_robots_directives( $settings );
 
 		if ( ! empty( $robots_directives ) ) {
 			echo '<meta name="robots" content="' . esc_attr( implode( ', ', $robots_directives ) ) . '">' . "\n";

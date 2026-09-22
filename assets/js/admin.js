@@ -217,6 +217,7 @@
 
 			if (isChecked) {
 				$('.mati-child-checkbox[data-parent="' + parentId + '"]').prop('checked', true);
+				$('#mati-tdm-policy-group').toggle($('input[name="add_noai_meta"]').prop('checked'));
 			}
 		});
 
@@ -228,6 +229,18 @@
 			if ($parent.prop('checked')) {
 				$parent.prop('checked', false);
 			}
+		});
+
+		// ========================================
+		// AI学習防止 / メディアのみ: 関連項目の表示切替
+		// ========================================
+
+		$('input[name="add_noai_meta"]').on('change', function() {
+			$('#mati-tdm-policy-group').toggle($(this).prop('checked'));
+		});
+
+		$('#mati-robots-header-media-only').on('change', function() {
+			$('#mati-tdm-follow-group').toggle($(this).prop('checked'));
 		});
 
 		// ========================================

@@ -291,7 +291,37 @@ class Mati_Admin {
 									AI学習防止メタタグを追加
 									<span class="nau-tooltip-wrapper">
 										<span class="nau-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
-										<span class="nau-tooltip-content" role="tooltip">AIクローラーに対して学習拒否の意思表示を行います</span>
+										<span class="nau-tooltip-content" role="tooltip">AIクローラーに対して学習拒否の意思表示を行います。<br>TDM Reservation Protocol（TDMRep）による拒否表明もあわせて行います</span>
+									</span>
+								</label>
+							</div>
+							<div class="nau-form-group" id="mati-tdm-policy-group" <?php echo empty( $settings['add_noai_meta'] ) ? 'style="display:none;"' : ''; ?>>
+								<label>
+									TDMRep ポリシーURL（任意）
+									<span class="nau-tooltip-wrapper">
+										<span class="nau-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="nau-tooltip-content" role="tooltip">詳細なライセンス条件や連絡先を記載したページがある場合、そのURLを入力します（https://のみ）</span>
+									</span>
+								</label>
+								<input type="url" name="tdm_policy_url" class="regular-text" placeholder="例: https://example.com/tdm-policy" value="<?php echo esc_attr( $settings['tdm_policy_url'] ?? '' ); ?>">
+							</div>
+							<div class="nau-form-group">
+								<label>
+									<input type="checkbox" id="mati-robots-header-media-only" name="robots_header_media_only" value="1" <?php checked( ! empty( $settings['robots_header_media_only'] ) ); ?>>
+									X-Robots-Tag をメディアファイルのみに適用
+									<span class="nau-tooltip-wrapper">
+										<span class="nau-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="nau-tooltip-content" role="tooltip">OFFのときはページとメディアファイルの両方に、ONのときはメディアファイル（アップロードフォルダ内のファイル）のみに付けます。<br>ページ内のメタタグは常に出力されます</span>
+									</span>
+								</label>
+							</div>
+							<div class="nau-form-group" id="mati-tdm-follow-group" <?php echo empty( $settings['robots_header_media_only'] ) ? 'style="display:none;"' : ''; ?>>
+								<label>
+									<input type="checkbox" name="tdm_follow_media_only" value="1" <?php checked( ! empty( $settings['tdm_follow_media_only'] ) ); ?>>
+									TDMRep をメディアファイルのみに適用
+									<span class="nau-tooltip-wrapper">
+										<span class="nau-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="nau-tooltip-content" role="tooltip">ONのときはメディアファイルのみに、OFFのときはページとメディアファイルの両方に付けます</span>
 									</span>
 								</label>
 							</div>
@@ -633,6 +663,8 @@ class Mati_Admin {
 					</div>
 				</div>
 
+				<?php $this->render_media_header_guide( $settings_manager->get_header_sets( $settings )['media'] ); ?>
+
 				<div class="nau-form-actions">
 					<button type="submit" class="button button-primary" id="mati-save-button" <?php echo $cp_is_running ? 'disabled' : ''; ?>>
 						設定を保存
@@ -831,6 +863,48 @@ class Mati_Admin {
 		wp_send_json_success( array( 'message' => '設定をインポートしました。' ) );
 	}
 
+	/**
+	 * メディアファイル用ヘッダーのサーバー設定案内
+	 *
+	 * @param array<string, string> $media_headers
+	 */
+	private function render_media_header_guide( array $media_headers ): void {
+		if ( empty( $media_headers ) ) {
+			return;
+		}
+
+		$apache_lines = Mati_Htaccess::build_lines( $media_headers );
+		$nginx        = Mati_Htaccess::build_nginx_snippet( $media_headers );
+
+		if ( null === $apache_lines || '' === $nginx ) {
+			return;
+		}
+		?>
+		<div class="nau-accordion-section nau-accordion-section--warning" data-section="media-header-guide">
+			<button type="button" class="nau-accordion-header"
+			        id="header-media-header-guide"
+			        aria-expanded="false"
+			        aria-controls="accordion-media-header-guide">
+				<span class="nau-accordion-title">メディアファイル用ヘッダーの設定</span>
+				<span class="nau-accordion-icon" aria-hidden="true"></span>
+			</button>
+			<div id="accordion-media-header-guide"
+			     class="nau-accordion-content"
+			     role="region"
+			     aria-labelledby="header-media-header-guide"
+			     aria-hidden="true">
+				<div class="mati-guide-content">
+					<p>メディアファイルにヘッダーを付けるには、サーバーの設定に以下を追加してください。<br>設定を変更した場合は、貼り直しが必要です。Carry Pod で静的化して公開する場合は不要です。</p>
+					<h4>Apache / LiteSpeed（アップロードフォルダの .htaccess）</h4>
+					<textarea class="large-text code" rows="<?php echo esc_attr( (string) count( $apache_lines ) ); ?>" readonly><?php echo esc_textarea( implode( "\n", $apache_lines ) ); ?></textarea>
+					<h4>Nginx（server ブロック内）</h4>
+					<textarea class="large-text code" rows="<?php echo esc_attr( (string) ( count( $media_headers ) + 2 ) ); ?>" readonly><?php echo esc_textarea( $nginx ); ?></textarea>
+				</div>
+			</div>
+		</div>
+		<?php
+	}
+
 	public function check_carry_pod_compatibility(): void {
 		if ( ! defined( 'CP_VERSION' ) ) {
 			return;
@@ -842,7 +916,7 @@ class Mati_Admin {
 			return;
 		}
 
-		if ( version_compare( $cp_version, '3.2.0', '>=' ) ) {
+		if ( version_compare( $cp_version, '3.3.1', '>=' ) ) {
 			return;
 		}
 
@@ -850,8 +924,8 @@ class Mati_Admin {
 		<div class="notice notice-warning">
 			<p>
 				<strong>⚠️ CarryPod連携</strong><br>
-				CarryPod 3.2.0以降にアップデートすると、双方向連携機能が有効になります。<br>
-				<small>現在: CarryPod <?php echo esc_html( $cp_version ); ?> → 推奨: CarryPod 3.2.0+</small>
+				CarryPod 3.3.1以降にアップデートすると、すべての連携機能が有効になります。<br>
+				<small>現在: CarryPod <?php echo esc_html( $cp_version ); ?> → 推奨: CarryPod 3.3.1+</small>
 			</p>
 		</div>
 		<?php

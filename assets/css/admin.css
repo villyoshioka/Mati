@@ -121,3 +121,38 @@ body.toplevel_page_mati #wpfooter {
 		display: none;
 	}
 }
+
+/* ========================================
+   メディアファイル用ヘッダーの設定案内
+   ======================================== */
+
+.nau-accordion-section--warning {
+	background: #fef8ee;
+}
+
+.nau-accordion-section--warning .nau-accordion-header:hover {
+	background: #fdf3e0;
+}
+
+.nau-accordion-section--warning .nau-accordion-title {
+	color: #996800;
+}
+
+.nau-accordion-section--warning .nau-accordion-content {
+	background: #fef8ee;
+	border-color: #e0c9a6;
+	font-size: 13px;
+	line-height: 1.6;
+	color: #1d2327;
+}
+
+.mati-guide-content h4 {
+	margin: 16px 0 8px;
+	font-size: 13px;
+	font-weight: 600;
+	color: #1d2327;
+}
+
+.mati-guide-content p {
+	margin: 8px 0;
+}

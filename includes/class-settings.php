@@ -79,6 +79,9 @@ class Mati_Settings {
 			'add_noarchive_meta'         => true,
 			'add_noimageindex_meta'      => true,
 			'add_noai_meta'              => true,
+			'tdm_policy_url'             => '',
+			'robots_header_media_only'   => false,
+			'tdm_follow_media_only'      => true,
 
 			'google_analytics_id'        => '',
 			'google_verification'        => '',
@@ -153,6 +156,8 @@ class Mati_Settings {
 			'enable_jsonld',
 			'enable_meta_description',
 			'add_noindex_meta',
+			'robots_header_media_only',
+			'tdm_follow_media_only',
 		);
 
 		foreach ( $checkbox_keys as $key ) {
@@ -168,9 +173,94 @@ class Mati_Settings {
 		$sanitized['bluesky_profile_url'] = $this->sanitize_profile_url( $settings['bluesky_profile_url'] ?? '' );
 		$sanitized['bluesky_did'] = $this->sanitize_bluesky_did( $settings['bluesky_did'] ?? '' );
 		$sanitized['frame_ancestors_domains'] = $this->sanitize_frame_ancestors_domains( $settings['frame_ancestors_domains'] ?? '' );
+		$tdm_policy_url              = $settings['tdm_policy_url'] ?? '';
+		$sanitized['tdm_policy_url'] = $this->sanitize_tdm_policy_url( is_string( $tdm_policy_url ) ? $tdm_policy_url : '' );
 
 		return $sanitized;
 	}
+
+	/**
+	 * TDMRep ポリシーURLをサニタイズ（HTTPS必須、ヘッダー・サーバー設定に出力できる文字のみ）
+	 */
+	private function sanitize_tdm_policy_url( string $url ): string {
+		$url = $this->sanitize_profile_url( trim( $url ) );
+
+		if ( '' === $url || strlen( $url ) > 2000 || ! Mati_Htaccess::is_safe_header( 'tdm-policy', $url ) ) {
+			return '';
+		}
+
+		return $url;
+	}
+
+	/**
+	 * robots 系の指示（meta robots / X-Robots-Tag 共通）
+	 *
+	 * @return string[]
+	 */
+	public function get_robots_directives( array $settings ): array {
+		$directives = array();
+
+		if ( ! empty( $settings['add_noindex_meta'] ) ) {
+			$directives[] = 'noindex';
+		}
+
+		if ( ! empty( $settings['add_noarchive_meta'] ) ) {
+			$directives[] = 'noarchive';
+		}
+
+		if ( ! empty( $settings['add_noimageindex_meta'] ) ) {
+			$directives[] = 'noimageindex';
+		}
+
+		if ( ! empty( $settings['add_noai_meta'] ) ) {
+			$directives[] = 'noai';
+			$directives[] = 'noimageai';
+		}
+
+		return $directives;
+	}
+
+	/**
+	 * ページ用・メディア用のヘッダー（X-Robots-Tag / TDMRep）
+	 *
+	 * 「メディアのみ」ON ならページから X-Robots-Tag を外す。
+	 * TDMRep は「追従」ならそれに合わせ、「分離」なら常にサイト全体に付ける。
+	 *
+	 * @return array{page: array<string, string>, media: array<string, string>}
+	 */
+	public function get_header_sets( ?array $settings = null ): array {
+		$settings   = $settings ?? $this->get_settings();
+		$media_only = ! empty( $settings['robots_header_media_only'] );
+
+		$robots = array();
+		$tdm    = array();
+
+		$directives = $this->get_robots_directives( $settings );
+		if ( ! empty( $directives ) ) {
+			$robots['X-Robots-Tag'] = implode( ', ', $directives );
+		}
+
+		if ( ! empty( $settings['add_noai_meta'] ) ) {
+			$tdm['tdm-reservation'] = '1';
+			if ( ! empty( $settings['tdm_policy_url'] ) ) {
+				$tdm['tdm-policy'] = $settings['tdm_policy_url'];
+			}
+		}
+
+		$page = array();
+		if ( ! $media_only ) {
+			$page = $robots;
+		}
+		if ( ! $media_only || empty( $settings['tdm_follow_media_only'] ) ) {
+			$page += $tdm;
+		}
+
+		return array(
+			'page'  => $page,
+			'media' => $robots + $tdm,
+		);
+	}
+
 
 	private function sanitize_verification_code( string $code ): string {
 		if ( empty( $code ) ) {

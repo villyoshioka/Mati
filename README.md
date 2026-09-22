@@ -5,7 +5,7 @@
 [![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![WordPress](https://img.shields.io/badge/WordPress-7.0%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-8.3%2B-blue.svg)](https://www.php.net/)
-[![Version](https://img.shields.io/badge/Version-2.3.0-green.svg)](https://github.com/villyoshioka/mati/releases)
+[![Version](https://img.shields.io/badge/Version-2.3.1-green.svg)](https://github.com/villyoshioka/mati/releases)
 
 > **注意**: **このプラグインについて、コードは公開していますが、サポートは行っていません。**
 
@@ -27,7 +27,7 @@ Matiは、あなたのWordPressサイトに「ちょっとした安心感」を�
    - **右クリック・ドラッグの禁止** — 画像を簡単に保存できないように制限をかけます。
    - **文字選択の禁止** — サイト内のテキストをコピーしにくくします。カテゴリーを指定して、適用する範囲を絞ることもできます。
    - **開発者ツール の抑制** — ブラウザの開発者ツールを使ったソースコードや画像の抜き取りを難しくします。
-   - **AI対策** — 自分の作品やデータをAIに勝手に学習させないよう、クローラーに拒否の意思を伝えます。
+   - **AI対策** — 自分の作品やデータをAIに勝手に学習させないよう、クローラーに拒否の意思を伝えます。TDMRep（テキスト・データマイニングの拒否表明の仕組み）にも対応しています。
 
 2. **サイトの「余計な情報」を隠す** — WordPressは、標準の状態だとバージョン情報などを公開してしまっています。これは悪意のある人が攻撃の隙を探るヒントになります。Matiは、こうした「デジタルの足跡」を自動でお掃除し、狙われにくいサイトにします。
 3. **SEO対策** — Googleなどの検索エンジンに「このサイトの正当な持ち主です」と証明する設定（所有権確認）を、難しいコードに触れずに行えたり検索にヒットしやすくなります。検索結果に表示されるページの説明文（メタディスクリプション）も自動で設定されます。
