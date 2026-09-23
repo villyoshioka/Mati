@@ -196,7 +196,11 @@ class Mati_Frontend {
 		$queried    = get_queried_object();
 
 		if ( is_front_page() ) {
-			// キャッチフレーズ（下のフォールバック）を使う
+			// 設定した説明文は本人が書いた文章なので切り詰めない。空ならキャッチフレーズ（下のフォールバック）
+			$custom = $this->clean_text( $this->settings_manager->get_settings()['front_page_description'] ?? '' );
+			if ( '' !== $custom ) {
+				return $custom;
+			}
 		} elseif ( is_singular() && $queried instanceof WP_Post ) {
 			// パスワード保護記事は本文・抜粋を出さない
 			if ( '' === $queried->post_password ) {
@@ -222,16 +226,26 @@ class Mati_Frontend {
 	}
 
 	private function clean_meta_description( string $text ): string {
-		$text = wp_strip_all_tags( strip_shortcodes( $text ), true );
-		// 切り詰めで実体参照が壊れないようデコードしておく（出力時に esc_attr で再エスケープ）
-		$text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
-		$text = trim( preg_replace( '/\s+/u', ' ', $text ) ?? '' );
+		$text = $this->clean_text( strip_shortcodes( $text ) );
 
 		if ( mb_strlen( $text ) > 120 ) {
 			$text = mb_substr( $text, 0, 120 ) . '…';
 		}
 
 		return $text;
+	}
+
+	/**
+	 * タグを除去し、実体参照をデコードして空白を整える
+	 *
+	 * 切り詰めで実体参照が壊れないよう、また JSON-LD に実体参照が残らないようデコードする。
+	 * HTML に出す場合は出力時に esc_attr で再エスケープすること。
+	 */
+	private function clean_text( string $text ): string {
+		$text = wp_strip_all_tags( $text, true );
+		$text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+
+		return trim( preg_replace( '/\s+/u', ' ', $text ) ?? '' );
 	}
 
 	public function start_meta_description_buffer(): void {
@@ -277,63 +291,111 @@ class Mati_Frontend {
 		return $head . substr( $html, $head_end );
 	}
 
+	/**
+	 * JSON-LD を @graph 1つにまとめて出力（サイト・運営者・記事・パンくずを @id で相互参照）
+	 *
+	 * AI学習・画像インデックス拒否と矛盾しないよう、画像（ロゴ・アイキャッチ）は出力しない。
+	 */
 	private function output_jsonld(): void {
-		$site_name = get_bloginfo( 'name' );
-		$site_url  = home_url( '/' );
+		$settings  = $this->settings_manager->get_settings();
+		$site_name = $this->clean_text( get_bloginfo( 'name' ) );
+		$home      = esc_url_raw( $this->get_static_url( home_url( '/' ) ) );
 
-		$static_site_url = $this->get_static_url( $site_url );
-
-		$website_data = array(
-			'@context' => 'https://schema.org',
-			'@type'    => 'WebSite',
-			'url'      => esc_url( $static_site_url ),
-			'name'     => esc_html( $site_name ),
-		);
-
-		echo '<script type="application/ld+json">' . wp_json_encode( $website_data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . '</script>' . "\n";
-
-		if ( is_front_page() ) {
-			$organization_data = array(
-				'@context' => 'https://schema.org',
-				'@type'    => 'Organization',
-				'url'      => esc_url( $static_site_url ),
-				'name'     => esc_html( $site_name ),
-			);
-
-			echo '<script type="application/ld+json">' . wp_json_encode( $organization_data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . '</script>' . "\n";
+		$description = '';
+		if ( ! empty( $settings['enable_meta_description'] ) ) {
+			$description = $this->clean_text( $settings['front_page_description'] ?? '' );
+		}
+		if ( '' === $description ) {
+			$description = $this->clean_text( get_bloginfo( 'description' ) );
 		}
 
-		if ( is_singular() ) {
-			$breadcrumb_items = array(
-				array(
-					'@type'    => 'ListItem',
-					'position' => 1,
-					'name'     => 'ホーム',
-					'item'     => esc_url( $static_site_url ),
-				),
-			);
+		$website = array(
+			'@type'      => 'WebSite',
+			'@id'        => $home . '#website',
+			'url'        => $home,
+			'name'       => $site_name,
+			'inLanguage' => get_bloginfo( 'language' ),
+			'publisher'  => array( '@id' => $home . '#publisher' ),
+		);
+		if ( '' !== $description ) {
+			$website['description'] = $description;
+		}
 
-			$post = get_post();
-			if ( $post ) {
-				$post_url        = get_permalink( $post );
-				$static_post_url = $this->get_static_url( $post_url );
+		$publisher_name = $this->clean_text( $settings['jsonld_publisher_name'] ?? '' );
+		$publisher      = array(
+			'@type' => 'person' === ( $settings['jsonld_publisher_type'] ?? '' ) ? 'Person' : 'Organization',
+			'@id'   => $home . '#publisher',
+			'name'  => '' !== $publisher_name ? $publisher_name : $site_name,
+			'url'   => $home,
+		);
 
-				$breadcrumb_items[] = array(
-					'@type'    => 'ListItem',
-					'position' => 2,
-					'name'     => esc_html( get_the_title( $post ) ),
-					'item'     => esc_url( $static_post_url ),
+		$same_as = (array) ( $settings['fediverse_profile_urls'] ?? array() );
+		// 保存済みのプロフィールURLは登録時のハンドルのままで、ドメイン認証でハンドルを変えると開けなくなるため DID から組み立てる
+		if ( ! empty( $settings['bluesky_did'] ) ) {
+			$same_as[] = 'https://bsky.app/profile/' . $settings['bluesky_did'];
+		}
+		$same_as = array_values( array_filter( array_map( 'esc_url_raw', $same_as ) ) );
+		if ( ! empty( $same_as ) ) {
+			$publisher['sameAs'] = $same_as;
+		}
+
+		$graph = array( $website, $publisher );
+
+		$post = get_queried_object();
+		if ( is_singular() && $post instanceof WP_Post ) {
+			$permalink = esc_url_raw( $this->get_static_url( (string) get_permalink( $post ) ) );
+			$title     = $this->clean_text( $post->post_title );
+
+			if ( 'post' === $post->post_type ) {
+				$graph[] = array(
+					'@type'            => 'BlogPosting',
+					'@id'              => $permalink . '#article',
+					'headline'         => $title,
+					'datePublished'    => get_the_date( DATE_W3C, $post ),
+					'dateModified'     => get_the_modified_date( DATE_W3C, $post ),
+					'mainEntityOfPage' => $permalink,
+					'isPartOf'         => array( '@id' => $home . '#website' ),
+					'publisher'        => array( '@id' => $home . '#publisher' ),
 				);
 			}
 
-			$breadcrumb_data = array(
-				'@context'        => 'https://schema.org',
-				'@type'           => 'BreadcrumbList',
-				'itemListElement' => $breadcrumb_items,
-			);
+			$crumbs = array( array( 'ホーム', $home ) );
 
-			echo '<script type="application/ld+json">' . wp_json_encode( $breadcrumb_data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . '</script>' . "\n";
+			$categories = 'post' === $post->post_type ? get_the_category( $post->ID ) : array();
+			if ( ! empty( $categories ) ) {
+				$crumbs[] = array(
+					$this->clean_text( $categories[0]->name ),
+					esc_url_raw( $this->get_static_url( get_category_link( $categories[0] ) ) ),
+				);
+			}
+
+			$crumbs[] = array( $title, $permalink );
+
+			$items = array();
+			foreach ( $crumbs as $i => $crumb ) {
+				$items[] = array(
+					'@type'    => 'ListItem',
+					'position' => $i + 1,
+					'name'     => $crumb[0],
+					'item'     => $crumb[1],
+				);
+			}
+
+			$graph[] = array(
+				'@type'           => 'BreadcrumbList',
+				'@id'             => $permalink . '#breadcrumb',
+				'itemListElement' => $items,
+			);
 		}
+
+		$data = array(
+			'@context' => 'https://schema.org',
+			'@graph'   => $graph,
+		);
+
+		// JSON_HEX_TAG: 値に含まれる </script> で script 要素を抜けられないようにする
+		// JSON_UNESCAPED_SLASHES / JSON_HEX_QUOT: CarryPod の絶対URL変換（\/" や \"/ の置換）に巻き込まれないようにする
+		echo '<script type="application/ld+json">' . wp_json_encode( $data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_QUOT ) . '</script>' . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON_HEX_TAG で < > をエスケープ済み
 	}
 
 	/**

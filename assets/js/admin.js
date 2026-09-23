@@ -239,6 +239,14 @@
 			$('#mati-tdm-policy-group').toggle($(this).prop('checked'));
 		});
 
+		$('input[name="enable_jsonld"]').on('change', function() {
+			$('#mati-jsonld-publisher-group').toggle($(this).prop('checked'));
+		});
+
+		$('input[name="enable_meta_description"]').on('change', function() {
+			$('#mati-front-page-description-group').toggle($(this).prop('checked'));
+		});
+
 		// ========================================
 		// テキスト選択禁止: トグル切替時の処理
 		// ON/OFFでチェックの意味が反転するため、チェックをクリアし項目名も切り替える

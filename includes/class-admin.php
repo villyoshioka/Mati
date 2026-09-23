@@ -482,9 +482,36 @@ class Mati_Admin {
 								JSON-LD構造化データを出力
 								<span class="nau-tooltip-wrapper">
 									<span class="nau-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
-									<span class="nau-tooltip-content" role="tooltip">構造化データ（WebSite・パンくずリスト等）を自動生成します</span>
+									<span class="nau-tooltip-content" role="tooltip">サイト・運営者・記事（タイトル・公開日・更新日）・パンくずリストの構造化データを自動生成します。<br>画像は出力しません</span>
 								</span>
 							</label>
+						</div>
+
+						<div id="mati-jsonld-publisher-group" <?php echo empty( $settings['enable_jsonld'] ) ? 'style="display:none;"' : ''; ?>>
+							<div class="nau-form-group">
+								<label for="mati-jsonld-publisher-type">
+									運営者の種別
+									<span class="nau-tooltip-wrapper">
+										<span class="nau-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="nau-tooltip-content" role="tooltip">検索エンジンにサイトの運営者を個人・団体のどちらとして伝えるかを選びます</span>
+									</span>
+								</label>
+								<select id="mati-jsonld-publisher-type" name="jsonld_publisher_type">
+									<option value="organization" <?php selected( $settings['jsonld_publisher_type'] ?? 'organization', 'organization' ); ?>>団体</option>
+									<option value="person" <?php selected( $settings['jsonld_publisher_type'] ?? 'organization', 'person' ); ?>>個人</option>
+								</select>
+							</div>
+
+							<div class="nau-form-group">
+								<label for="mati-jsonld-publisher-name">
+									運営者名（任意）
+									<span class="nau-tooltip-wrapper">
+										<span class="nau-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="nau-tooltip-content" role="tooltip">空欄の場合はサイト名を使います</span>
+									</span>
+								</label>
+								<input type="text" id="mati-jsonld-publisher-name" name="jsonld_publisher_name" class="regular-text" value="<?php echo esc_attr( $settings['jsonld_publisher_name'] ?? '' ); ?>" placeholder="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
+							</div>
 						</div>
 
 						<div class="nau-form-group">
@@ -496,6 +523,17 @@ class Mati_Admin {
 									<span class="nau-tooltip-content" role="tooltip">記事の抜粋・本文やサイトのキャッチフレーズから説明文を自動生成します。<br>テーマや他のプラグインが出力する説明文より優先されます</span>
 								</span>
 							</label>
+						</div>
+
+						<div class="nau-form-group" id="mati-front-page-description-group" <?php echo empty( $settings['enable_meta_description'] ) ? 'style="display:none;"' : ''; ?>>
+							<label for="mati-front-page-description">
+								トップページの説明文（任意）
+								<span class="nau-tooltip-wrapper">
+									<span class="nau-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+									<span class="nau-tooltip-content" role="tooltip">トップページの説明文として使います。JSON-LDのサイト説明にも使われます。<br>空欄の場合はキャッチフレーズを使います</span>
+								</span>
+							</label>
+							<textarea id="mati-front-page-description" name="front_page_description" class="large-text" rows="3" placeholder="<?php echo esc_attr( get_bloginfo( 'description' ) ); ?>"><?php echo esc_textarea( $settings['front_page_description'] ?? '' ); ?></textarea>
 						</div>
 
 						<div class="nau-form-group">
@@ -706,7 +744,7 @@ class Mati_Admin {
 		}
 
 		$settings_manager = Mati_Settings::get_instance();
-		$new_settings     = $_POST['settings'] ?? array();
+		$new_settings     = wp_unslash( $_POST['settings'] ?? array() );
 
 		// 保存前の設定で表示されていた案内を非表示にする（内容が変わると再表示される）
 		$hidden_guide = empty( $new_settings['hide_media_header_guide'] ) ? null : $this->build_media_header_guide( $settings_manager->get_header_sets()['media'] );

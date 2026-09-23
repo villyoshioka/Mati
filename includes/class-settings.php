@@ -90,7 +90,10 @@ class Mati_Settings {
 			'bluesky_profile_url'        => '',
 			'bluesky_did'                => '',
 			'enable_jsonld'              => true,
+			'jsonld_publisher_type'      => 'organization',
+			'jsonld_publisher_name'      => '',
 			'enable_meta_description'    => true,
+			'front_page_description'     => '',
 			'add_noindex_meta'           => false,
 
 			'disable_text_selection'     => false,
@@ -184,7 +187,22 @@ class Mati_Settings {
 		$tdm_policy_url              = $settings['tdm_policy_url'] ?? '';
 		$sanitized['tdm_policy_url'] = $this->sanitize_tdm_policy_url( is_string( $tdm_policy_url ) ? $tdm_policy_url : '' );
 
+		$sanitized['jsonld_publisher_type']  = in_array( $settings['jsonld_publisher_type'] ?? '', array( 'organization', 'person' ), true ) ? $settings['jsonld_publisher_type'] : 'organization';
+		$sanitized['jsonld_publisher_name']  = $this->sanitize_plain_text( $settings['jsonld_publisher_name'] ?? '', 100 );
+		$sanitized['front_page_description'] = $this->sanitize_plain_text( $settings['front_page_description'] ?? '', 300 );
+
 		return $sanitized;
+	}
+
+	/**
+	 * 1行のテキストをサニタイズ（タグ・改行を除去し、文字数を制限）
+	 */
+	private function sanitize_plain_text( mixed $text, int $max_length ): string {
+		if ( ! is_string( $text ) ) {
+			return '';
+		}
+
+		return mb_substr( sanitize_text_field( $text ), 0, $max_length );
 	}
 
 	/**
