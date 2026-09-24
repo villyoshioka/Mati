@@ -92,6 +92,7 @@ class Mati_Settings {
 			'enable_jsonld'              => true,
 			'jsonld_publisher_type'      => 'organization',
 			'jsonld_publisher_name'      => '',
+			'jsonld_publisher_urls'      => array(),
 			'enable_meta_description'    => true,
 			'front_page_description'     => '',
 			'add_noindex_meta'           => false,
@@ -189,6 +190,7 @@ class Mati_Settings {
 
 		$sanitized['jsonld_publisher_type']  = in_array( $settings['jsonld_publisher_type'] ?? '', array( 'organization', 'person' ), true ) ? $settings['jsonld_publisher_type'] : 'organization';
 		$sanitized['jsonld_publisher_name']  = $this->sanitize_plain_text( $settings['jsonld_publisher_name'] ?? '', 100 );
+		$sanitized['jsonld_publisher_urls']  = $this->sanitize_profile_urls( $settings['jsonld_publisher_urls'] ?? array() );
 		$sanitized['front_page_description'] = $this->sanitize_plain_text( $settings['front_page_description'] ?? '', 300 );
 
 		return $sanitized;

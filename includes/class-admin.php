@@ -512,6 +512,26 @@ class Mati_Admin {
 								</label>
 								<input type="text" id="mati-jsonld-publisher-name" name="jsonld_publisher_name" class="regular-text" value="<?php echo esc_attr( $settings['jsonld_publisher_name'] ?? '' ); ?>" placeholder="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
 							</div>
+
+							<div class="nau-form-group">
+								<label>
+									運営者の関連URL（任意）
+									<span class="nau-tooltip-wrapper">
+										<span class="nau-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="nau-tooltip-content" role="tooltip">X・YouTube などのアカウントを運営者の情報として検索エンジンに伝えます（最大5個）。<br>SNS本人認証で設定したアカウントは自動で含まれます</span>
+									</span>
+								</label>
+								<?php $publisher_url_placeholder = 'URL（例: https://x.com/username）'; ?>
+								<div id="mati-publisher-urls-container" class="mati-url-list" data-name="jsonld_publisher_urls[]" data-placeholder="<?php echo esc_attr( $publisher_url_placeholder ); ?>">
+									<?php foreach ( ( $settings['jsonld_publisher_urls'] ?? array() ) ?: array( '' ) as $url ) : ?>
+										<div class="nau-input-row mati-url-row">
+											<input type="url" name="jsonld_publisher_urls[]" class="regular-text" value="<?php echo esc_attr( $url ); ?>" placeholder="<?php echo esc_attr( $publisher_url_placeholder ); ?>">
+											<button type="button" class="button button-caution nau-input-row-remove mati-remove-url">削除</button>
+										</div>
+									<?php endforeach; ?>
+								</div>
+								<button type="button" class="button button-primary nau-input-row-add mati-add-url" data-container="mati-publisher-urls-container">URL を追加</button>
+							</div>
 						</div>
 
 						<div class="nau-form-group">
@@ -573,29 +593,16 @@ class Mati_Admin {
 									<span class="nau-tooltip-content" role="tooltip">サイトとアカウントを紐付けて本人認証できます（最大5個）</span>
 								</span>
 							</label>
-							<div id="mati-fediverse-urls-container">
-								<?php
-								$fediverse_urls = $settings['fediverse_profile_urls'] ?? array();
-								if ( empty( $fediverse_urls ) ) {
-									?>
-									<div class="nau-input-row mati-fediverse-url-row">
-										<input type="url" name="fediverse_profile_urls[]" class="regular-text" value="" placeholder="プロフィールURL（例: https://misskey.io/@username）">
+							<?php $fediverse_url_placeholder = 'プロフィールURL（例: https://misskey.io/@username）'; ?>
+							<div id="mati-fediverse-urls-container" class="mati-url-list" data-name="fediverse_profile_urls[]" data-placeholder="<?php echo esc_attr( $fediverse_url_placeholder ); ?>">
+								<?php foreach ( ( $settings['fediverse_profile_urls'] ?? array() ) ?: array( '' ) as $url ) : ?>
+									<div class="nau-input-row mati-url-row">
+										<input type="url" name="fediverse_profile_urls[]" class="regular-text" value="<?php echo esc_attr( $url ); ?>" placeholder="<?php echo esc_attr( $fediverse_url_placeholder ); ?>">
 										<button type="button" class="button button-caution nau-input-row-remove mati-remove-url">削除</button>
 									</div>
-									<?php
-								} else {
-									foreach ( $fediverse_urls as $url ) {
-										?>
-										<div class="nau-input-row mati-fediverse-url-row">
-											<input type="url" name="fediverse_profile_urls[]" class="regular-text" value="<?php echo esc_attr( $url ); ?>" placeholder="プロフィールURL（例: https://misskey.io/@username）">
-											<button type="button" class="button button-caution nau-input-row-remove mati-remove-url">削除</button>
-										</div>
-										<?php
-									}
-								}
-								?>
+								<?php endforeach; ?>
 							</div>
-							<button type="button" class="button button-primary nau-input-row-add" id="mati-add-fediverse-url">URL を追加</button>
+							<button type="button" class="button button-primary nau-input-row-add mati-add-url" data-container="mati-fediverse-urls-container">URL を追加</button>
 						</div>
 
 						<div class="nau-form-group">

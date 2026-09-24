@@ -39,14 +39,14 @@ body.toplevel_page_mati #wpfooter {
 }
 
 /* ========================================
-   Fediverse URL 動的追加・削除（Mati固有）
+   URL リスト 動的追加・削除（Mati固有）
    ======================================== */
 
-#mati-fediverse-urls-container {
+.mati-url-list {
 	margin-top: 4px;
 }
 
-#mati-add-fediverse-url:disabled {
+.mati-add-url:disabled {
 	opacity: 0.5 !important;
 	cursor: not-allowed !important;
 }

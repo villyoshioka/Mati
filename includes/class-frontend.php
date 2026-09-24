@@ -329,12 +329,15 @@ class Mati_Frontend {
 			'url'   => $home,
 		);
 
-		$same_as = (array) ( $settings['fediverse_profile_urls'] ?? array() );
+		$same_as = array_merge(
+			(array) ( $settings['fediverse_profile_urls'] ?? array() ),
+			(array) ( $settings['jsonld_publisher_urls'] ?? array() )
+		);
 		// 保存済みのプロフィールURLは登録時のハンドルのままで、ドメイン認証でハンドルを変えると開けなくなるため DID から組み立てる
 		if ( ! empty( $settings['bluesky_did'] ) ) {
 			$same_as[] = 'https://bsky.app/profile/' . $settings['bluesky_did'];
 		}
-		$same_as = array_values( array_filter( array_map( 'esc_url_raw', $same_as ) ) );
+		$same_as = array_values( array_unique( array_filter( array_map( 'esc_url_raw', $same_as ) ) ) );
 		if ( ! empty( $same_as ) ) {
 			$publisher['sameAs'] = $same_as;
 		}

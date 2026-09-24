@@ -540,44 +540,51 @@
 		});
 
 		// ========================================
-		// Fediverse URL の動的追加・削除
+		// URL リスト（Fediverse / 運営者の関連URL）の動的追加・削除
+		// 押されたボタンが属するリストだけを操作する
 		// ========================================
 
-		$('#mati-add-fediverse-url').on('click', function() {
-			const $container = $('#mati-fediverse-urls-container');
-			const currentCount = $container.find('.mati-fediverse-url-row').length;
+		$('.mati-add-url').on('click', function() {
+			const $container = $('#' + $(this).data('container'));
 
-			if (currentCount >= 5) {
+			if ($container.find('.mati-url-row').length >= 5) {
 				alert('URLは最大5個までです。');
 				return;
 			}
 
-			const $newRow = $('<div class="nau-input-row mati-fediverse-url-row">' +
-				'<input type="url" name="fediverse_profile_urls[]" class="regular-text" value="" placeholder="プロフィールURL（例: https://misskey.io/@username）">' +
+			const $newRow = $('<div class="nau-input-row mati-url-row">' +
+				'<input type="url" class="regular-text" value="">' +
 				'<button type="button" class="button button-caution nau-input-row-remove mati-remove-url">削除</button>' +
 				'</div>');
+			$newRow.find('input').attr({
+				name: $container.data('name'),
+				placeholder: $container.data('placeholder')
+			});
 
 			$container.append($newRow);
 
-			updateRemoveButtons();
+			updateAddButtons();
 		});
 
-		$(document).on('click', '.mati-remove-url:not(.mati-clear-bluesky)', function() {
-			const $container = $('#mati-fediverse-urls-container');
-			if ($container.find('.mati-fediverse-url-row').length <= 1) {
-				$(this).closest('.mati-fediverse-url-row').find('input').val('');
+		$(document).on('click', '.mati-url-list .mati-remove-url', function() {
+			const $container = $(this).closest('.mati-url-list');
+			const $row = $(this).closest('.mati-url-row');
+			if ($container.find('.mati-url-row').length <= 1) {
+				$row.find('input').val('');
 			} else {
-				$(this).closest('.mati-fediverse-url-row').remove();
+				$row.remove();
 			}
-			updateRemoveButtons();
+			updateAddButtons();
 		});
 
-		function updateRemoveButtons() {
-			const count = $('#mati-fediverse-urls-container').find('.mati-fediverse-url-row').length;
-			$('#mati-add-fediverse-url').prop('disabled', count >= 5);
+		function updateAddButtons() {
+			$('.mati-add-url').each(function() {
+				const count = $('#' + $(this).data('container')).find('.mati-url-row').length;
+				$(this).prop('disabled', count >= 5);
+			});
 		}
 
-		updateRemoveButtons();
+		updateAddButtons();
 
 		$(document).on("click", ".mati-clear-bluesky", function() {
 			const $row = $(this).closest(".mati-fediverse-url-row");
