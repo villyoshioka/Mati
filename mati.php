@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: Mati
- * Version: 2.5.0
+ * Version: 2.6.0
  * Description: コンテンツ保護・メタタグ管理・SEO設定を簡単に制御できるWordPressプラグイン。
  * Requires at least: 7.0
  * Tested up to: 7.1
- * Requires PHP: 8.3
+ * Requires PHP: 8.5.12
  * Author: Vill Yoshioka
  * License: GPLv3
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'MATI_VERSION', '2.5.0' );
+define( 'MATI_VERSION', '2.6.0' );
 define( 'MATI_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MATI_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'MATI_PLUGIN_FILE', __FILE__ );
@@ -50,7 +50,6 @@ class Mati {
 
 	private function init_hooks(): void {
 		register_activation_hook( MATI_PLUGIN_FILE, array( $this, 'activate' ) );
-		register_deactivation_hook( MATI_PLUGIN_FILE, array( $this, 'deactivate' ) );
 		register_uninstall_hook( MATI_PLUGIN_FILE, array( 'Mati', 'uninstall' ) );
 
 		add_action( 'plugins_loaded', array( $this, 'maybe_upgrade' ) );
@@ -73,11 +72,6 @@ class Mati {
 		if ( empty( $settings ) ) {
 			$settings_manager->reset_settings();
 		}
-	}
-
-	public function deactivate(): void {
-		$settings_manager = Mati_Settings::get_instance();
-		$settings_manager->reset_settings();
 	}
 
 	public static function uninstall(): void {

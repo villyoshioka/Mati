@@ -88,6 +88,9 @@ class Mati_Admin {
 
 		$cp_is_running = (bool) ( get_transient( 'cp_manual_running' ) || get_transient( 'cp_auto_running' ) );
 
+		// URL で切り替えるスイッチは、確認リンク（nonce 付き）を押したときだけ反映する
+		$toggle_confirmed = isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ), 'mati_toggle' );
+
 		$beta_message = '';
 		if ( isset( $_GET['mati_beta'] ) ) {
 			$beta_param = sanitize_text_field( wp_unslash( $_GET['mati_beta'] ) );
@@ -109,8 +112,12 @@ class Mati_Admin {
 					$beta_message = 'need_password';
 				}
 			} elseif ( $beta_param === 'off' ) {
-				$settings_manager->disable_beta_mode();
-				$beta_message = 'deactivated';
+				if ( $toggle_confirmed ) {
+					$settings_manager->disable_beta_mode();
+					$beta_message = 'deactivated';
+				} else {
+					$beta_message = 'confirm_off';
+				}
 			}
 		}
 		$is_beta_mode = $settings_manager->is_beta_mode_enabled();
@@ -118,7 +125,9 @@ class Mati_Admin {
 		$force_message = '';
 		if ( isset( $_GET['mati_force'] ) ) {
 			$force_param = sanitize_text_field( wp_unslash( $_GET['mati_force'] ) );
-			if ( $force_param === 'on' ) {
+			if ( ! $toggle_confirmed && in_array( $force_param, array( 'on', 'off' ), true ) ) {
+				$force_message = 'confirm_' . $force_param;
+			} elseif ( $force_param === 'on' ) {
 				set_transient( 'mati_force_protection', true, DAY_IN_SECONDS );
 				$force_message = 'activated';
 			} elseif ( $force_param === 'off' ) {
@@ -131,6 +140,18 @@ class Mati_Admin {
 		?>
 		<div class="wrap nau-admin-wrap">
 			<h1>Mati 設定</h1>
+
+			<?php if ( $force_message === 'confirm_on' || $force_message === 'confirm_off' ) : ?>
+			<div class="notice notice-warning">
+				<p><a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=mati&mati_force=' . ( $force_message === 'confirm_on' ? 'on' : 'off' ) ), 'mati_toggle' ) ); ?>"><?php echo $force_message === 'confirm_on' ? '強制保護モードを有効にする' : '強制保護モードを無効にする'; ?></a></p>
+			</div>
+			<?php endif; ?>
+
+			<?php if ( $beta_message === 'confirm_off' ) : ?>
+			<div class="notice notice-warning">
+				<p><a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=mati&mati_beta=off' ), 'mati_toggle' ) ); ?>">ベータモードを無効にする</a></p>
+			</div>
+			<?php endif; ?>
 
 			<?php if ( $is_force_mode ) : ?>
 			<div class="notice notice-warning">
@@ -410,6 +431,16 @@ class Mati_Admin {
 									<span class="nau-tooltip-wrapper">
 										<span class="nau-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
 										<span class="nau-tooltip-content" role="tooltip">短縮URLのリンクを非表示にします</span>
+									</span>
+								</label>
+							</div>
+							<div class="nau-form-group">
+								<label>
+									<input type="checkbox" class="mati-child-checkbox" data-parent="mati-meta-removal-enabled" name="remove_speculation_rules" value="1" <?php checked( ! empty( $settings['remove_speculation_rules'] ) ); ?>>
+									先読み設定（Speculation Rules）の非表示
+									<span class="nau-tooltip-wrapper">
+										<span class="nau-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="nau-tooltip-content" role="tooltip">WordPressが出力するページ先読み用の設定を非表示にします。リンク先の先読みも行われなくなります</span>
 									</span>
 								</label>
 							</div>
@@ -704,6 +735,35 @@ class Mati_Admin {
 							</label>
 							<textarea name="frame_ancestors_domains" class="large-text" rows="4" placeholder="例: https://example.com"><?php echo esc_textarea( $settings['frame_ancestors_domains'] ?? '' ); ?></textarea>
 						</div>
+
+						<?php if ( $settings_manager->is_static_headers_available() ) : ?>
+						<div class="nau-form-group">
+							<label>
+								<input type="checkbox" name="hsts_enabled" value="1" <?php checked( ! empty( $settings['hsts_enabled'] ) ); ?>>
+								HTTPSを強制する（HSTS）
+								<span class="nau-tooltip-wrapper">
+									<span class="nau-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+									<span class="nau-tooltip-content" role="tooltip">CarryPodが生成する_headersに、ブラウザへHTTPSでの接続を記憶させるヘッダーを追加します。WordPress自体には出力しません。<br>一度記憶されると期間内はhttpに戻せないため、HTTPSで公開できていることを確認してから有効にしてください</span>
+								</span>
+							</label>
+						</div>
+						<div id="mati-hsts-group" <?php echo empty( $settings['hsts_enabled'] ) ? 'style="display:none;"' : ''; ?>>
+							<div class="nau-form-group">
+								<label>
+									期間（日）
+									<span class="nau-tooltip-wrapper">
+										<span class="nau-tooltip-trigger" tabindex="0" role="button" aria-label="詳細を表示" aria-expanded="false">?</span>
+										<span class="nau-tooltip-content" role="tooltip">ブラウザがHTTPSでの接続を記憶する期間です。0にすると記憶を解除します</span>
+									</span>
+								</label>
+								<input type="number" name="hsts_days" class="regular-text" min="0" step="1" value="<?php echo esc_attr( (string) ( $settings['hsts_days'] ?? 183 ) ); ?>">
+							</div>
+						</div>
+						<?php else : ?>
+						<?php // 項目を出さないときも、保存済みの値を引き継ぐ ?>
+						<input type="hidden" name="hsts_enabled" value="<?php echo empty( $settings['hsts_enabled'] ) ? '' : '1'; ?>">
+						<input type="hidden" name="hsts_days" value="<?php echo esc_attr( (string) ( $settings['hsts_days'] ?? 183 ) ); ?>">
+						<?php endif; ?>
 
 					</div>
 				</div>
@@ -1007,7 +1067,7 @@ class Mati_Admin {
 			return;
 		}
 
-		if ( version_compare( $cp_version, '3.3.1', '>=' ) ) {
+		if ( version_compare( $cp_version, '3.4.0', '>=' ) ) {
 			return;
 		}
 
@@ -1015,8 +1075,8 @@ class Mati_Admin {
 		<div class="notice notice-warning">
 			<p>
 				<strong>⚠️ CarryPod連携</strong><br>
-				CarryPod 3.3.1以降にアップデートすると、すべての連携機能が有効になります。<br>
-				<small>現在: CarryPod <?php echo esc_html( $cp_version ); ?> → 推奨: CarryPod 3.3.1+</small>
+				CarryPod 3.4.0以降にアップデートすると、すべての連携機能が有効になります。<br>
+				<small>現在: CarryPod <?php echo esc_html( $cp_version ); ?> → 推奨: CarryPod 3.4.0+</small>
 			</p>
 		</div>
 		<?php

@@ -247,6 +247,10 @@
 			$('#mati-front-page-description-group').toggle($(this).prop('checked'));
 		});
 
+		$('input[name="hsts_enabled"][type="checkbox"]').on('change', function() {
+			$('#mati-hsts-group').toggle($(this).prop('checked'));
+		});
+
 		// ========================================
 		// テキスト選択禁止: トグル切替時の処理
 		// ON/OFFでチェックの意味が反転するため、チェックをクリアし項目名も切り替える
@@ -310,7 +314,7 @@
 					formData[name] = $checkbox.prop('checked') ? '1' : '';
 				}
 			});
-			$form.find('input[type="text"], input[type="url"], input[type="hidden"]').each(function() {
+			$form.find('input[type="text"], input[type="url"], input[type="number"], input[type="hidden"]').each(function() {
 				const $input = $(this);
 				const name = $input.attr('name');
 

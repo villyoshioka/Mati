@@ -136,7 +136,7 @@ class Mati_Updater {
 					'banners'      => array(),
 					'requires'     => '7.0',
 					'tested'       => '7.1',
-					'requires_php' => '8.3',
+					'requires_php' => '8.5.12',
 				);
 			}
 		} else {
@@ -193,7 +193,7 @@ class Mati_Updater {
 			'download_link'     => $download_url,
 			'requires'          => '7.0',
 			'tested'            => '7.1',
-			'requires_php'      => '8.3',
+			'requires_php'      => '8.5.12',
 			'last_updated'      => $release['published_at'],
 		);
 	}

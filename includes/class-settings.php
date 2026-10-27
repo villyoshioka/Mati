@@ -54,6 +54,10 @@ class Mati_Settings {
 
 		if ( empty( $merged['obfuscation_seed'] ) ) {
 			$merged['obfuscation_seed'] = $this->generate_seed();
+			if ( is_array( $settings ) && ! empty( $settings ) ) {
+				$settings['obfuscation_seed'] = $merged['obfuscation_seed'];
+				update_option( self::OPTION_NAME, $settings );
+			}
 		}
 
 		return $merged;
@@ -68,6 +72,7 @@ class Mati_Settings {
 			'remove_rsd'                 => true,
 			'remove_wlwmanifest'         => true,
 			'remove_shortlink'           => true,
+			'remove_speculation_rules'   => true,
 			'remove_pingback'            => true,
 
 			'content_protection_enabled' => true,
@@ -100,6 +105,8 @@ class Mati_Settings {
 			'disable_text_selection'     => false,
 			'text_selection_categories'  => array(),
 			'frame_ancestors_domains'    => '',
+			'hsts_enabled'               => false,
+			'hsts_days'                  => 183,
 
 			'obfuscation_seed'           => '',
 		);
@@ -154,6 +161,7 @@ class Mati_Settings {
 			'remove_rsd',
 			'remove_wlwmanifest',
 			'remove_shortlink',
+			'remove_speculation_rules',
 			'remove_pingback',
 			'content_protection_enabled',
 			'disable_right_click',
@@ -170,6 +178,7 @@ class Mati_Settings {
 			'add_noindex_meta',
 			'robots_header_media_only',
 			'tdm_follow_media_only',
+			'hsts_enabled',
 		);
 
 		foreach ( $checkbox_keys as $key ) {
@@ -185,6 +194,7 @@ class Mati_Settings {
 		$sanitized['bluesky_profile_url'] = $this->sanitize_profile_url( $settings['bluesky_profile_url'] ?? '' );
 		$sanitized['bluesky_did'] = $this->sanitize_bluesky_did( $settings['bluesky_did'] ?? '' );
 		$sanitized['frame_ancestors_domains'] = $this->sanitize_frame_ancestors_domains( $settings['frame_ancestors_domains'] ?? '' );
+		$sanitized['hsts_days']               = isset( $settings['hsts_days'] ) && is_numeric( $settings['hsts_days'] ) ? absint( $settings['hsts_days'] ) : 183;
 		$tdm_policy_url              = $settings['tdm_policy_url'] ?? '';
 		$sanitized['tdm_policy_url'] = $this->sanitize_tdm_policy_url( is_string( $tdm_policy_url ) ? $tdm_policy_url : '' );
 
@@ -192,6 +202,9 @@ class Mati_Settings {
 		$sanitized['jsonld_publisher_name']  = $this->sanitize_plain_text( $settings['jsonld_publisher_name'] ?? '', 100 );
 		$sanitized['jsonld_publisher_urls']  = $this->sanitize_profile_urls( $settings['jsonld_publisher_urls'] ?? array() );
 		$sanitized['front_page_description'] = $this->sanitize_plain_text( $settings['front_page_description'] ?? '', 300 );
+
+		$seed                          = $settings['obfuscation_seed'] ?? '';
+		$sanitized['obfuscation_seed'] = is_string( $seed ) && preg_match( '/^[A-Za-z0-9]{1,64}$/', $seed ) ? $seed : $this->generate_seed();
 
 		return $sanitized;
 	}
@@ -249,14 +262,33 @@ class Mati_Settings {
 	}
 
 	/**
-	 * ページ用・メディア用のヘッダー（X-Robots-Tag / TDMRep）
+	 * Carry Pod が _headers を生成する設定か（静的サイト専用の項目を出す条件）
+	 */
+	public function is_static_headers_available(): bool {
+		if ( ! class_exists( 'CP_Settings' ) || ! method_exists( 'CP_Settings', 'get_instance' ) ) {
+			return false;
+		}
+
+		try {
+			return ! empty( CP_Settings::get_instance()->get_settings()['generate_mati_headers'] );
+		} catch ( Throwable ) {
+			return false;
+		}
+	}
+
+	/**
+	 * ページ用・メディア用のヘッダー（X-Robots-Tag / TDMRep / HSTS）
 	 *
 	 * 「メディアのみ」ON ならページから X-Robots-Tag を外す。
 	 * TDMRep は「追従」ならそれに合わせ、「分離」なら常にサイト全体に付ける。
+	 * HSTS は静的サイトの _headers 専用。稼働中の WordPress（ローカルの開発ドメインなど）に出すと
+	 * ブラウザに HTTPS 固定で記憶されてしまうため、$for_static_site が false のときは含めない。
 	 *
+	 * @param array|null $settings        設定（省略時は保存済みの設定）
+	 * @param bool       $for_static_site Carry Pod が _headers に書き出す用途か
 	 * @return array{page: array<string, string>, media: array<string, string>}
 	 */
-	public function get_header_sets( ?array $settings = null ): array {
+	public function get_header_sets( ?array $settings = null, bool $for_static_site = true ): array {
 		$settings   = $settings ?? $this->get_settings();
 		$media_only = ! empty( $settings['robots_header_media_only'] );
 
@@ -281,6 +313,11 @@ class Mati_Settings {
 		}
 		if ( ! $media_only || empty( $settings['tdm_follow_media_only'] ) ) {
 			$page += $tdm;
+		}
+
+		// サイト全体に効くヘッダーのため、ページ用（_headers の /*）にだけ入れる
+		if ( $for_static_site && ! empty( $settings['hsts_enabled'] ) && $this->is_static_headers_available() ) {
+			$page['Strict-Transport-Security'] = 'max-age=' . absint( $settings['hsts_days'] ?? 183 ) * DAY_IN_SECONDS;
 		}
 
 		return array(
@@ -441,7 +478,9 @@ class Mati_Settings {
 			}
 
 			$parsed = wp_parse_url( $line );
-			if ( $parsed && isset( $parsed['host'] ) ) {
+			// CSP の区切り文字（; や '）や「*」単体が入ると別のディレクティブになるため、ホスト名として正しいものだけ通す
+			if ( $parsed && isset( $parsed['host'] )
+				&& preg_match( '/^(?:\*\.)?(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9-]{2,63}$/i', $parsed['host'] ) ) {
 				$origin = 'https://' . $parsed['host'];
 				if ( ! empty( $parsed['port'] ) ) {
 					$origin .= ':' . intval( $parsed['port'] );

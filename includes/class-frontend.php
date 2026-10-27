@@ -81,6 +81,10 @@ class Mati_Frontend {
 			remove_action( 'template_redirect', 'wp_shortlink_header', 11 );
 		}
 
+		if ( ! empty( $settings['remove_speculation_rules'] ) ) {
+			add_filter( 'wp_speculation_rules_configuration', '__return_null' );
+		}
+
 		if ( ! empty( $settings['remove_pingback'] ) ) {
 			add_filter( 'wp_headers', array( $this, 'remove_pingback_header' ) );
 		}
@@ -120,7 +124,7 @@ class Mati_Frontend {
 	public function add_security_headers( array $headers ): array {
 		$settings = $this->settings_manager->get_settings();
 
-		$headers = array_merge( $headers, $this->settings_manager->get_header_sets( $settings )['page'] );
+		$headers = array_merge( $headers, $this->settings_manager->get_header_sets( $settings, false )['page'] );
 
 		$frame_ancestors = "'self'";
 		$custom_domains  = $settings['frame_ancestors_domains'] ?? '';
