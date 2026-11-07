@@ -452,6 +452,18 @@ class Mati_Frontend {
 	}
 
 	/**
+	 * 保護用の style / script を文字列で返す
+	 *
+	 * WordPress を通らない HTML（Carry Pod の追加ファイルなど）に差し込む用途。
+	 */
+	public function get_protection_markup(): string {
+		ob_start();
+		$this->add_protection_styles();
+		$this->add_protection_scripts();
+		return (string) ob_get_clean();
+	}
+
+	/**
 	 * テキスト選択禁止を現在のページに適用すべきか判定
 	 *
 	 * カテゴリー未指定時は disable_text_selection の値そのまま（従来動作）。
