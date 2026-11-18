@@ -354,7 +354,7 @@ class Mati_Frontend {
 			$title     = $this->clean_text( $post->post_title );
 
 			if ( 'post' === $post->post_type ) {
-				$graph[] = array(
+				$article = array(
 					'@type'            => 'BlogPosting',
 					'@id'              => $permalink . '#article',
 					'headline'         => $title,
@@ -364,6 +364,16 @@ class Mati_Frontend {
 					'isPartOf'         => array( '@id' => $home . '#website' ),
 					'publisher'        => array( '@id' => $home . '#publisher' ),
 				);
+
+				// meta description と同じ文（Mati が出していないときは本文由来の文を新たに出さない）
+				if ( ! empty( $settings['enable_meta_description'] ) ) {
+					$article_description = $this->get_meta_description();
+					if ( '' !== $article_description ) {
+						$article['description'] = $article_description;
+					}
+				}
+
+				$graph[] = $article;
 			}
 
 			$crumbs = array( array( 'ホーム', $home ) );
@@ -471,6 +481,10 @@ class Mati_Frontend {
 	 * OFFなら指定カテゴリーのみ制限する。
 	 */
 	private function should_disable_text_selection( array $settings ): bool {
+		if ( is_singular() ) {
+			return $this->settings_manager->is_text_selection_protected( get_queried_object_id(), $settings );
+		}
+
 		$enabled      = ! empty( $settings['disable_text_selection'] );
 		$category_ids = array_map( 'intval', (array) ( $settings['text_selection_categories'] ?? array() ) );
 		$category_ids = array_filter( $category_ids );
@@ -479,7 +493,7 @@ class Mati_Frontend {
 			return $enabled;
 		}
 
-		$matches = ( is_singular() && has_category( $category_ids ) ) || is_category( $category_ids );
+		$matches = is_category( $category_ids );
 
 		return $enabled ? ! $matches : $matches;
 	}

@@ -5,7 +5,7 @@
 [![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![WordPress](https://img.shields.io/badge/WordPress-7.0%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-8.5.12%2B-blue.svg)](https://www.php.net/)
-[![Version](https://img.shields.io/badge/Version-2.6.1-green.svg)](https://github.com/villyoshioka/mati/releases)
+[![Version](https://img.shields.io/badge/Version-2.7.0-green.svg)](https://github.com/villyoshioka/mati/releases)
 
 > **注意**: **このプラグインについて、コードは公開していますが、サポートは行っていません。**
 
@@ -25,7 +25,7 @@ MatiはあなたのWordPressサイトに「ちょっとした安心感」をプ�
 
 1. サイトのコンテンツ保護: 大切に作った作品を誰かに簡単に持ち出されたり、勝手に再利用されたりするのを防ぎます。
    - 右クリック・ドラッグの禁止: 画像を簡単に保存できないように制限をかけます。
-   - 文字選択の禁止: サイト内のテキストをコピーしにくくします。カテゴリーを指定して、適用する範囲を絞ることもできます。
+   - 文字選択の禁止: サイト内のテキストをコピーしにくくします。カテゴリーを指定して、適用する範囲を絞ることもできます。Carry Pod が出力する AI 向けのテキスト版にも、本文を載せません。
    - 開発者ツール の抑制: ブラウザの開発者ツールを使ったソースコードや画像の抜き取りを難しくします。
    - AI対策: 自分の作品やデータをAIに勝手に学習させないよう、クローラーに拒否の意思を伝えます。TDMRep（テキスト・データマイニングの拒否表明の仕組み）にも対応しています。
 

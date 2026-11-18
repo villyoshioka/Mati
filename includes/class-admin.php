@@ -1067,7 +1067,7 @@ class Mati_Admin {
 			return;
 		}
 
-		if ( version_compare( $cp_version, '3.4.0', '>=' ) ) {
+		if ( version_compare( $cp_version, '3.7.0', '>=' ) ) {
 			return;
 		}
 
@@ -1075,8 +1075,8 @@ class Mati_Admin {
 		<div class="notice notice-warning">
 			<p>
 				<strong>⚠️ CarryPod連携</strong><br>
-				CarryPod 3.4.0以降にアップデートすると、すべての連携機能が有効になります。<br>
-				<small>現在: CarryPod <?php echo esc_html( $cp_version ); ?> → 推奨: CarryPod 3.4.0+</small>
+				CarryPod 3.7.0以降にアップデートすると、すべての連携機能が有効になります。<br>
+				<small>現在: CarryPod <?php echo esc_html( $cp_version ); ?> → 推奨: CarryPod 3.7.0+</small>
 			</p>
 		</div>
 		<?php

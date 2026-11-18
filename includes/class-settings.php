@@ -262,6 +262,27 @@ class Mati_Settings {
 	}
 
 	/**
+	 * 投稿が文字選択禁止の対象か
+	 *
+	 * カテゴリー未指定時は disable_text_selection の値そのまま。
+	 * 指定ありの場合、ONなら指定カテゴリーを制限から除外し、OFFなら指定カテゴリーのみ制限する。
+	 * Carry Pod は Markdown 版で本文を出すかの判定に使う。
+	 */
+	public function is_text_selection_protected( int $post_id, ?array $settings = null ): bool {
+		$settings     = $settings ?? $this->get_settings();
+		$enabled      = ! empty( $settings['disable_text_selection'] );
+		$category_ids = array_filter( array_map( 'intval', (array) ( $settings['text_selection_categories'] ?? array() ) ) );
+
+		if ( empty( $category_ids ) ) {
+			return $enabled;
+		}
+
+		$matches = has_category( $category_ids, $post_id );
+
+		return $enabled ? ! $matches : $matches;
+	}
+
+	/**
 	 * Carry Pod が _headers を生成する設定か（静的サイト専用の項目を出す条件）
 	 */
 	public function is_static_headers_available(): bool {
